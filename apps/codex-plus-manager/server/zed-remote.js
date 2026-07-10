@@ -1,4 +1,4 @@
-// Zed remote 项目列表
+// Zed remote 项目列表 + 打开
 // 对应 Rust crates/codex-plus-core/src/zed_remote.rs
 //
 // 从 ~/.config/zed/settings.json 读 ssh_projects
@@ -7,6 +7,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
+import { spawn } from "node:child_process";
 
 const HOME = os.homedir();
 
@@ -53,4 +54,36 @@ export async function listZedRemoteProjects() {
     });
   }
   return { projects };
+}
+
+export async function openZedRemote({ project, strategy }) {
+  if (!project) {
+    return { status: "failed", message: "project 不能为空" };
+  }
+  const url = project.url || (project.ssh?.host
+    ? `zed://ssh/${project.ssh.user}@${project.ssh.host}${project.ssh.port ? `:${project.ssh.port}` : ""}${project.path || ""}`
+    : null);
+  if (!url) {
+    return { status: "failed", message: "无法构造 zed URL" };
+  }
+  // 策略：default / newWindow / reuseWindow / addToFocusedWorkspace
+  // macOS 用 `open`，Windows 用 `start`，Linux 用 `xdg-open`
+  let cmd, args;
+  if (process.platform === "darwin") {
+    cmd = "open";
+    args = strategy === "newWindow" ? ["-n", url] : [url];
+  } else if (process.platform === "win32") {
+    cmd = "cmd";
+    args = ["/c", "start", "", url];
+  } else {
+    cmd = "xdg-open";
+    args = [url];
+  }
+  try {
+    const child = spawn(cmd, args, { detached: true, stdio: "ignore" });
+    child.unref();
+    return { status: "ok", url, strategy: strategy || "default", message: `已打开 ${url}` };
+  } catch (err) {
+    return { status: "failed", message: err.message };
+  }
 }

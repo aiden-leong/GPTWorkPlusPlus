@@ -34,8 +34,26 @@ import {
   remotePluginMarketplaceStatus,
   repairRemotePluginMarketplace,
 } from "./plugin-marketplace.js";
-import { listZedRemoteProjects } from "./zed-remote.js";
+import { listZedRemoteProjects, openZedRemote } from "./zed-remote.js";
 import { listUserScripts } from "./user-scripts.js";
+import {
+  applyRelayInjection,
+  applyPureApiInjection,
+  clearRelayInjection,
+} from "./injection.js";
+import {
+  loadCcsProviders,
+  importCcsProviders,
+  loadPendingProviderImport,
+  confirmPendingProviderImport,
+  dismissPendingProviderImport,
+} from "./ccs-import.js";
+import {
+  refreshScriptMarket,
+  installMarketScript,
+  setUserScriptEnabled,
+  deleteUserScript,
+} from "./script-market.js";
 
 const HOME = os.homedir();
 const LOGS_DIR = path.join(CODEX_HOME, "logs");
@@ -176,12 +194,27 @@ const h = {
 
   // ====== CCS Provider Import ======
 
-  "/manager/load-ccs-providers": () => notImplemented("load-ccs-providers"),
-  "/manager/import-ccs-providers": () => notImplemented("import-ccs-providers"),
-  "/manager/load-pending-provider-import": () =>
-    ok({ pending: null }),
-  "/manager/confirm-pending-provider-import": () => ok({}),
-  "/manager/dismiss-pending-provider-import": () => ok({}),
+  "/manager/load-ccs-providers": async () => {
+    const r = await loadCcsProviders();
+    return ok(r);
+  },
+  "/manager/import-ccs-providers": async () => {
+    const r = await importCcsProviders();
+    return ok(r);
+  },
+  "/manager/load-pending-provider-import": () => {
+    const r = loadPendingProviderImport();
+    return ok(r);
+  },
+  "/manager/confirm-pending-provider-import": async (args) => {
+    const req = args?.request ?? args;
+    const r = await confirmPendingProviderImport(req);
+    return r.status === "ok" ? ok(r) : r;
+  },
+  "/manager/dismiss-pending-provider-import": () => {
+    const r = dismissPendingProviderImport();
+    return ok(r);
+  },
 
   // ====== Local Sessions ======
 
@@ -201,7 +234,11 @@ const h = {
     const r = await listZedRemoteProjects();
     return ok(r);
   },
-  "/zed-remote/open": () => notImplemented("zed-remote.open"),
+  "/zed-remote/open": async (args) => {
+    const payload = args?.payload ?? args;
+    const r = await openZedRemote(payload ?? {});
+    return r.status === "ok" ? ok(r) : r;
+  },
   "/zed-remote/forget-project": () => ok({}),
 
   // ====== Provider Sync ======
@@ -212,21 +249,22 @@ const h = {
   // ====== Script Market ======
 
   "/manager/refresh-script-market": async () => {
-    const r = await listUserScripts();
-    return ok({
-      market: {
-        status: "ok",
-        message: "本地扫描",
-        indexUrl: "",
-        updatedAt: new Date().toISOString(),
-        scripts: [],
-      },
-      user_scripts: r,
-    });
+    const r = await refreshScriptMarket();
+    return ok(r);
   },
-  "/manager/install-market-script": () => notImplemented("install-market-script"),
-  "/manager/set-user-script-enabled": () => ok({}),
-  "/manager/delete-user-script": () => ok({}),
+  "/manager/install-market-script": async (args) => {
+    const id = args?.id ?? "";
+    const r = await installMarketScript(id);
+    return r.status === "failed" ? r : ok(r);
+  },
+  "/manager/set-user-script-enabled": async (args) => {
+    const r = await setUserScriptEnabled(args?.key, args?.enabled);
+    return ok(r);
+  },
+  "/manager/delete-user-script": async (args) => {
+    const r = await deleteUserScript(args?.key);
+    return ok(r);
+  },
 
   // ====== External ======
 
@@ -386,9 +424,24 @@ const h = {
 
   // ====== Injection ======
 
-  "/manager/apply-relay-injection": () => notImplemented("apply-relay-injection"),
-  "/manager/apply-pure-api-injection": () => notImplemented("apply-pure-api-injection"),
-  "/manager/clear-relay-injection": () => notImplemented("clear-relay-injection"),
+  "/manager/apply-relay-injection": async () => {
+    const settings = await settingsStore.load();
+    const activeId = settings.activeRelayId || settings.activeRelayProfileId || "default";
+    const profile = settings.relayProfiles.find((p) => p.id === activeId) || settings.relayProfiles[0];
+    const r = await applyRelayInjection(profile);
+    return r.status === "ok" ? ok(r) : r;
+  },
+  "/manager/apply-pure-api-injection": async () => {
+    const settings = await settingsStore.load();
+    const activeId = settings.activeRelayId || settings.activeRelayProfileId || "default";
+    const profile = settings.relayProfiles.find((p) => p.id === activeId) || settings.relayProfiles[0];
+    const r = await applyPureApiInjection(profile);
+    return r.status === "ok" ? ok(r) : r;
+  },
+  "/manager/clear-relay-injection": async () => {
+    const r = await clearRelayInjection();
+    return r.status === "ok" ? ok(r) : r;
+  },
 
   // ====== Diagnostic events ======
 
