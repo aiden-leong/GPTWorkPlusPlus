@@ -175,6 +175,31 @@ scripts/installer/
   macos/package-dmg.sh          macOS DMG packager
 ```
 
+## Community and Support
+
+Join the Codex++ discussion group to report issues, share usage notes, or suggest features:
+
+WeChat group: [get the latest QR code](https://docs.qq.com/doc/DQ2VOanZTTFZJcUpZ#).
+
+If Codex++ has helped you, you can buy me a coffee or send a small tip to support continued maintenance.
+
+<p align="center">
+  <img src="docs/images/sponsor-alipay.jpg" alt="Alipay sponsor QR code" width="220">
+  <img src="docs/images/sponsor-wechat.jpg" alt="WeChat sponsor QR code" width="220">
+</p>
+
+## Friendly Links
+
+- [LINUX DO](https://linux.do)
+
+## License
+
+Copyright (C) 2026 BigPizzaV3
+
+Starting with versions published after this license change, CodexPlusPlus is licensed under the [GNU Affero General Public License v3.0](LICENSE), using the SPDX identifier `AGPL-3.0-only`.
+
+If you modify and distribute this project, or make a modified version available to users over a network, you must provide the complete corresponding source code to those users as required by AGPLv3. This license covers only CodexPlusPlus's own code. It does not grant rights to OpenAI, ChatGPT, or Codex trademarks, application assets, or other third-party materials. Versions previously received under another license are not retroactively affected by this change.
+
 ## Notes
 
 GPT Work++ is an external enhancement tool and does not modify original GPT Work files. If a future GPT Work update changes page structure, the injection script may need updates.

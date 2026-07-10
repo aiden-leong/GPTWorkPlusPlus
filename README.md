@@ -172,6 +172,18 @@ scripts/installer/
   macos/package-dmg.sh          macOS DMG 打包
 ```
 
+## 友情链接
+
+- [LINUX DO](https://linux.do)
+
+## 开源协议
+
+Copyright (C) 2026 BigPizzaV3
+
+CodexPlusPlus 自本次许可证变更后的版本起，采用 [GNU Affero General Public License v3.0](LICENSE)，SPDX 标识为 `AGPL-3.0-only`。
+
+修改并分发本项目，或通过网络向用户提供修改后的版本时，必须按照 AGPLv3 向对应用户提供完整的对应源代码。许可证仅覆盖 CodexPlusPlus 自身代码，不授予 OpenAI、ChatGPT、Codex 的商标、应用资源或其他第三方内容的权利。此前已经按照其他许可获得的版本不受本次变更追溯影响。
+
 ## 说明
 
 GPT Work++ 是外部增强工具，不修改 GPT Work 原始文件。GPT Work 更新后，如果页面结构变化，可能需要更新注入脚本。
