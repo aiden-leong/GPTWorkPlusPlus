@@ -116,18 +116,7 @@ experimental_bearer_token = "sk-..."
 
 增强功能在管理工具中统一开关。默认开启增强注入；关闭后不会注入 GPT Work++ 菜单和脚本。
 
-如果启用中转注入模式，插件市场解锁不再需要，界面会提示“中转注入模式下无需开启”。会话删除、导出、移动、粘贴修复、推荐内容和用户脚本等增强仍可继续使用。
-
-## 推荐内容
-
-推荐内容来自远程广告列表：
-
-```text
-https://raw.githubusercontent.com/BigPizzaV3/Ad-List/main/ads.json
-https://cdn.jsdelivr.net/gh/BigPizzaV3/Ad-List@main/ads.json
-```
-
-请求时会自动追加 `?v=时间戳` 绕开 CDN 旧缓存。推荐内容加载慢不会影响后端连接状态。
+如果启用中转注入模式，插件市场解锁不再需要，界面会提示"中转注入模式下无需开启"。会话删除、导出、移动、粘贴修复和用户脚本等增强仍可继续使用。
 
 ## 自动更新与安装包
 
