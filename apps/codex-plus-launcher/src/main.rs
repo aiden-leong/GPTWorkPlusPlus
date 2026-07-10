@@ -49,9 +49,6 @@ async fn main() -> Result<()> {
         activate_existing_codex_app(&options).await?;
         return Ok(());
     };
-    tokio::spawn(async {
-        let _ = notify_manager_when_update_available().await;
-    });
     let hooks = LauncherHooks::default();
     let handle = launch_and_inject_with_hooks(options, &hooks).await?;
     handle.wait_for_codex_exit().await?;
@@ -200,29 +197,6 @@ fn log_launcher_already_running(debug_port: u16) {
     );
 }
 
-async fn notify_manager_when_update_available() -> anyhow::Result<bool> {
-    let update =
-        codex_plus_core::update::check_for_update(codex_plus_core::version::VERSION).await?;
-    if !update.update_available {
-        return Ok(false);
-    }
-    open_manager_with_update_prompt()?;
-    Ok(true)
-}
-
-fn open_manager_with_update_prompt() -> anyhow::Result<()> {
-    let manager_path = manager_exe_path();
-    let mut command = std::process::Command::new(&manager_path);
-    command.arg("--show-update");
-    #[cfg(windows)]
-    {
-        command.creation_flags(codex_plus_core::windows_create_no_window());
-    }
-    command
-        .spawn()
-        .map(|_| ())
-        .map_err(|error| anyhow::anyhow!("启动管理工具失败：{error}"))
-}
 
 fn parse_launch_options<I, S>(args: I) -> LaunchOptions
 where

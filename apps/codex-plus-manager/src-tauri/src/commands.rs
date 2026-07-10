@@ -46,7 +46,6 @@ pub struct OverviewPayload {
     pub management_shortcut: PathState,
     pub latest_launch: Option<LaunchStatus>,
     pub current_version: String,
-    pub update_status: String,
     pub settings_path: String,
     pub logs_path: String,
 }
@@ -338,7 +337,6 @@ pub struct ScriptMarketPayload {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StartupPayload {
-    pub show_update: bool,
 }
 
 #[tauri::command]
@@ -356,23 +354,10 @@ pub fn startup_options() -> CommandResult<StartupPayload> {
     ok(
         "启动参数已读取。",
         StartupPayload {
-            show_update: startup_should_show_update(),
         },
     )
 }
 
-pub fn startup_should_show_update() -> bool {
-    should_show_update(
-        std::env::args(),
-        std::env::var("CODEX_PLUS_SHOW_UPDATE").ok().as_deref(),
-    )
-}
-
-fn should_show_update<I, S>(args: I, env_value: Option<&str>) -> bool
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<str>,
-{
     args.into_iter().any(|arg| arg.as_ref() == "--show-update") || env_value == Some("1")
 }
 
@@ -389,8 +374,7 @@ pub async fn load_overview() -> CommandResult<OverviewPayload> {
                 management_shortcut: path_state(None),
                 latest_launch: None,
                 current_version: codex_plus_core::version::VERSION.to_string(),
-                update_status: "not_checked".to_string(),
-                settings_path: codex_plus_core::paths::default_settings_path()
+                    settings_path: codex_plus_core::paths::default_settings_path()
                     .to_string_lossy()
                     .to_string(),
                 logs_path: codex_plus_core::paths::default_diagnostic_log_path()
@@ -410,7 +394,6 @@ pub async fn load_overview() -> CommandResult<OverviewPayload> {
             management_shortcut: shortcut_state(entrypoints.management_shortcut),
             latest_launch,
             current_version: codex_plus_core::version::VERSION.to_string(),
-            update_status: "not_checked".to_string(),
             settings_path: codex_plus_core::paths::default_settings_path()
                 .to_string_lossy()
                 .to_string(),
@@ -1546,84 +1529,9 @@ fn count_skill_files(root: &Path) -> std::io::Result<usize> {
 }
 
 #[tauri::command]
-pub async fn check_update() -> CommandResult<Value> {
-    match codex_plus_core::update::check_for_update(codex_plus_core::version::VERSION).await {
-        Ok(update) => {
-            let status = if update.update_available {
-                "ok"
-            } else {
-                "not_checked"
-            };
-            CommandResult {
-                status: status.to_string(),
-                message: if update.update_available {
-                    "发现可用更新。".to_string()
-                } else {
-                    "当前已是最新版本。".to_string()
-                },
-                payload: json!({
-                    "currentVersion": update.current_version,
-                    "latestVersion": update.latest_version,
-                    "releaseSummary": update.release_summary,
-                    "assetName": update.asset_name,
-                    "assetUrl": update.asset_url,
-                    "updateAvailable": update.update_available,
-                    "progress": 0
-                }),
-            }
-        }
-        Err(error) => failed(
-            &format!("检查更新失败：{error}"),
-            json!({
-                "currentVersion": codex_plus_core::version::VERSION,
-                "latestVersion": Value::Null,
-                "releaseSummary": "",
-                "assetName": Value::Null,
-                "assetUrl": Value::Null,
-                "updateAvailable": false,
-                "progress": 0
-            }),
-        ),
-    }
 }
 
 #[tauri::command]
-pub async fn perform_update(
-    release: Option<codex_plus_core::update::Release>,
-) -> CommandResult<Value> {
-    let Some(release) = release else {
-        return failed(
-            "请先检查更新并选择可下载的 Release asset。",
-            json!({
-                "currentVersion": codex_plus_core::version::VERSION,
-                "progress": 0
-            }),
-        );
-    };
-    let download_dir = codex_plus_core::paths::default_app_state_dir().join("updates");
-    match codex_plus_core::update::perform_update(&release, &download_dir).await {
-        Ok(result) => ok(
-            "安装包已下载并启动，请按安装向导完成更新。",
-            json!({
-                "currentVersion": codex_plus_core::version::VERSION,
-                "latestVersion": result.release.version,
-                "releaseSummary": result.release.body,
-                "installedPath": result.installer_path.to_string_lossy(),
-                "launched": result.launched,
-                "progress": 100
-            }),
-        ),
-        Err(error) => failed(
-            &format!("安装更新失败：{error}"),
-            json!({
-                "currentVersion": codex_plus_core::version::VERSION,
-                "latestVersion": release.version,
-                "releaseSummary": release.body,
-                "progress": 0
-            }),
-        ),
-    }
-}
 
 #[tauri::command]
 pub fn load_watcher_state() -> CommandResult<WatcherPayload> {
@@ -3108,7 +3016,6 @@ fn diagnostics_report() -> String {
             management_shortcut: shortcut_state(entrypoints.management_shortcut),
             latest_launch,
             current_version: codex_plus_core::version::VERSION.to_string(),
-            update_status: "not_checked".to_string(),
             settings_path: codex_plus_core::paths::default_settings_path()
                 .to_string_lossy()
                 .to_string(),
@@ -3251,29 +3158,6 @@ mod tests {
         assert_eq!(result.status, "ok");
     }
 
-    #[test]
-    fn startup_options_honors_show_update_environment() {
-        unsafe {
-            std::env::set_var("CODEX_PLUS_SHOW_UPDATE", "1");
-        }
-
-        let result = startup_options();
-
-        unsafe {
-            std::env::remove_var("CODEX_PLUS_SHOW_UPDATE");
-        }
-
-        assert_eq!(result.status, "ok");
-        assert!(result.payload.show_update);
-    }
-
-    #[test]
-    fn startup_options_honors_show_update_argument() {
-        assert!(should_show_update(
-            ["codex-plus-plus-manager.exe", "--show-update"],
-            None
-        ));
-    }
 
     #[test]
     fn overview_contains_expected_operational_fields() {
@@ -3300,13 +3184,6 @@ mod tests {
     }
 
     #[test]
-    fn update_install_requires_release_payload() {
-        let result = tauri::async_runtime::block_on(perform_update(None));
-
-        assert_eq!(result.status, "failed");
-        assert!(result.message.contains("请先检查更新"));
-    }
-
     #[test]
     fn watcher_state_returns_disabled_flag_path() {
         let result = load_watcher_state();

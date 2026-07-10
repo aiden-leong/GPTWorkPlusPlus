@@ -528,27 +528,6 @@ type InstallResult = CommandResult<{
   management_shortcut: { installed: boolean; path: string | null };
 }>;
 
-type UpdateResult = CommandResult<{
-  currentVersion: string;
-  latestVersion?: string | null;
-  releaseSummary?: string;
-  assetName?: string | null;
-  assetUrl?: string | null;
-  updateAvailable?: boolean;
-  installedPath?: string;
-  progress?: number;
-}>;
-
-type AdItem = {
-  id?: string;
-  type: "sponsor" | "normal" | string;
-  title: string;
-  description: string;
-  url: string;
-  image?: string;
-  highlights?: string[];
-  expires_at?: string;
-};
 
 
 type ScriptMarketResult = CommandResult<{
@@ -610,7 +589,6 @@ function syncMarketInstalledState(current: ScriptMarketResult | null, userScript
 }
 
 type StartupResult = CommandResult<{
-  showUpdate: boolean;
 }>;
 
 type Route = "overview" | "relay" | "sessions" | "context" | "enhance" | "zedRemote" | "userScripts" | "maintenance" | "about" | "settings";
@@ -733,308 +711,6 @@ export function App() {
   const [logs, setLogs] = useState<LogsResult | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsResult | null>(null);
   const [watcher, setWatcher] = useState<WatcherResult | null>(null);
-  const [update, setUpdate] = useState<UpdateResult | null>(null);
-  const [updateInstallProgress, setUpdateInstallProgress] = useState<TaskProgress>({
-    active: false,
-    percent: 0,
-    message: t("尚未运行安装包更新。"),
-  });
-  const [scriptMarket, setScriptMarket] = useState<ScriptMarketResult | null>(null);
-  const [launchForm, setLaunchForm] = useState({
-    appPath: "",
-    debugPort: "9229",
-    helperPort: "57321",
-  });
-  const prevLaunchStatusRef = useRef<string | null>(null);
-  const [settingsForm, setSettingsForm] = useState<BackendSettings>({ ...defaultSettings });
-  const [providerSyncProgress, setProviderSyncProgress] = useState<ProviderSyncProgress>({
-    active: false,
-    percent: 0,
-    message: t("尚未运行历史会话修复。"),
-    result: null,
-  });
-  const [pluginMarketplaceProgress, setPluginMarketplaceProgress] = useState<TaskProgress>({
-    active: false,
-    percent: 0,
-    message: t("尚未运行插件市场修复。"),
-  });
-  const [remotePluginMarketplace, setRemotePluginMarketplace] = useState<RemotePluginMarketplaceResult | null>(null);
-  const [remotePluginMarketplaceProgress, setRemotePluginMarketplaceProgress] = useState<TaskProgress>({
-    active: false,
-    percent: 0,
-    message: t("尚未检查官方远端插件缓存。"),
-  });
-  const [providerSyncTargets, setProviderSyncTargets] = useState<ProviderSyncTargetsResult | null>(null);
-  const [selectedProviderSyncTarget, setSelectedProviderSyncTarget] = useState("");
-  const [removeOwnedData, setRemoveOwnedData] = useState(false);
-  const [relaySwitching, setRelaySwitching] = useState(false);
-
-  const call = <T,>(command: string, args?: Record<string, unknown>) => invoke<T>(command, args);
-
-  const logDiagnostic = (event: string, detail: Record<string, unknown> = {}) => {
-    void invoke("write_diagnostic_event", { event, detail }).catch(() => {});
-  };
-
-  const run = async <T,>(task: () => Promise<T>): Promise<T | null> => {
-    try {
-      return await task();
-    } catch (error) {
-      showNotice(t("调用失败"), stringifyError(error), "failed");
-      return null;
-    }
-  };
-
-  const refreshOverview = async (silent = false) => {
-    const result = await run(() => call<OverviewResult>("load_overview"));
-    if (result) {
-      // 崩溃检测：进程从运行状态变为停止/失败 → 弹出通知
-      const prev = prevLaunchStatusRef.current;
-      const current = result.latest_launch?.status;
-      if (prev && prev === "running" && current && (current === "stopped" || current === "failed" || current === "crashed")) {
-        showNotice(t("Codex 意外停止"), tf("进程状态：{0}。是否要重新启动？", [current]), "failed");
-      }
-      prevLaunchStatusRef.current = current ?? null;
-      setOverview(result);
-      if (!silent) showResultNotice(t("概览已检查"), result, { silentSuccess: true });
-    }
-  };
-
-  const refreshSettings = async (silent = false) => {
-    const result = await run(() => call<SettingsResult>("load_settings"));
-    if (result) {
-      setSettings(result);
-      const normalized = normalizeSettings(result.settings);
-      setSettingsForm(normalized);
-      setLaunchForm((current) => ({
-        ...current,
-        appPath: current.appPath || result.settings.codexAppPath || "",
-      }));
-      if (!silent) showResultNotice(t("设置已加载"), result, { silentSuccess: true });
-      return normalized;
-    }
-    return null;
-  };
-
-  const refreshScriptMarket = async (silent = false) => {
-    const result = await run(() => call<ScriptMarketResult>("refresh_script_market"));
-    if (result) {
-      setScriptMarket(result);
-      setSettings((current) => (current ? { ...current, user_scripts: result.user_scripts } : current));
-      if (!silent || !isSuccessStatus(result.status)) showResultNotice(t("脚本市场"), result, { silentSuccess: true });
-    }
-  };
-
-  const installMarketScript = async (id: string) => {
-    const result = await run(() => call<ScriptMarketResult>("install_market_script", { id }));
-    if (result) {
-      setScriptMarket(result);
-      setSettings((current) => (current ? { ...current, user_scripts: result.user_scripts } : current));
-      showResultNotice(t("脚本市场"), result);
-    }
-  };
-
-  const setUserScriptEnabled = async (key: string, enabled: boolean) => {
-    const result = await run(() => call<SettingsResult>("set_user_script_enabled", { key, enabled }));
-    if (result) {
-      setSettings(result);
-      setScriptMarket((current) => syncMarketInstalledState(current, result.user_scripts));
-      showResultNotice(t("本地脚本"), result);
-    }
-  };
-
-  const deleteUserScript = async (key: string) => {
-    const script = settings?.user_scripts?.scripts?.find((item) => item.key === key);
-    const name = script?.name || key;
-    if (!window.confirm(tf("删除脚本“{0}”？此操作会移除本地脚本文件。", [name]))) return;
-    const result = await run(() => call<SettingsResult>("delete_user_script", { key }));
-    if (result) {
-      setSettings(result);
-      setScriptMarket((current) => syncMarketInstalledState(current, result.user_scripts));
-      showResultNotice(t("本地脚本"), result);
-    }
-  };
-
-  const refreshRelay = async (silent = false) => {
-    const result = await run(() => call<RelayResult>("relay_status"));
-    if (result) {
-      setRelay(result);
-      if (!silent) showResultNotice(t("登录状态"), result, { silentSuccess: true });
-    }
-  };
-
-  const refreshRelayFiles = async (silent = false) => {
-    const result = await run(() => call<RelayFilesResult>("read_relay_files"));
-    if (result) {
-      setRelayFiles(result);
-      if (!silent) showResultNotice(t("配置文件"), result, { silentSuccess: true });
-    }
-    return result;
-  };
-
-  const refreshEnvConflicts = async (silent = false) => {
-    const result = await run(() => call<EnvConflictsResult>("check_env_conflicts"));
-    if (result) {
-      setEnvConflicts(result);
-      if (!silent || !isSuccessStatus(result.status)) showResultNotice(t("环境变量检测"), result, { silentSuccess: true });
-    }
-    return result;
-  };
-
-  const removeEnvConflicts = async (names: string[]) => {
-    const uniqueNames = Array.from(new Set(names.map((name) => name.trim()).filter(Boolean)));
-    if (!uniqueNames.length) return;
-    if (!window.confirm(tf("删除这些环境变量？\n\n{0}\n\n删除前会写入备份。", [uniqueNames.join("\n")]))) return;
-    const result = await run(() => call<RemoveEnvConflictsResult>("remove_env_conflicts", { request: { names: uniqueNames } }));
-    if (result) {
-      setEnvConflicts({
-        status: result.status,
-        message: result.message,
-        conflicts: result.remaining,
-      });
-      showNotice(t("环境变量清理"), result.message, result.status);
-    }
-  };
-
-  const refreshCcsProviders = async (silent = false) => {
-    const result = await run(() => call<CcsProvidersResult>("load_ccs_providers"));
-    if (result) {
-      setCcsProviders(result);
-      if (!silent || !isSuccessStatus(result.status)) showResultNotice(t("cc-switch 导入"), result, { silentSuccess: true });
-    }
-    return result;
-  };
-
-  const importCcsProviders = async () => {
-    const result = await run(() => call<SettingsResult>("import_ccs_providers"));
-    if (result) {
-      setSettings(result);
-      setSettingsForm(normalizeSettings(result.settings));
-      showResultNotice(t("cc-switch 导入"), result);
-      await refreshCcsProviders(true);
-    }
-  };
-
-  const refreshPendingProviderImport = async (silent = true) => {
-    const result = await run(() => call<PendingProviderImportResult>("load_pending_provider_import"));
-    if (result) {
-      setPendingProviderImport(result.pending);
-      if (!silent && !isSuccessStatus(result.status)) showResultNotice(t("Codex++ 导入"), result, { silentSuccess: true });
-    }
-    return result;
-  };
-
-  const confirmPendingProviderImport = async () => {
-    const result = await run(() => call<SettingsResult>("confirm_pending_provider_import"));
-    if (result) {
-      setPendingProviderImport(null);
-      setSettings(result);
-      setSettingsForm(normalizeSettings(result.settings));
-      showResultNotice(t("Codex++ 导入"), result);
-      await refreshCcsProviders(true);
-    }
-  };
-
-  const dismissPendingProviderImport = async () => {
-    const result = await run(() => call<PendingProviderImportResult>("dismiss_pending_provider_import"));
-    if (result) {
-      setPendingProviderImport(null);
-      showResultNotice(t("Codex++ 导入"), result, { silentSuccess: true });
-    }
-  };
-
-  const refreshLocalSessions = async (silent = false) => {
-    const result = await run(() => call<LocalSessionsResult>("list_local_sessions"));
-    if (result) {
-      setLocalSessions(result);
-      if (!silent || !isSuccessStatus(result.status)) showResultNotice(t("会话管理"), result, { silentSuccess: true });
-    }
-    return result;
-  };
-
-  const refreshZedRemoteProjects = async (silent = false) => {
-    const result = await run(() => call<ZedRemoteProjectsResult>("list_zed_remote_projects"));
-    if (result) {
-      setZedRemoteProjects(result);
-      if (!silent || !isSuccessStatus(result.status)) showResultNotice(t("Zed 远程项目"), result, { silentSuccess: true });
-    }
-    return result;
-  };
-
-  const openZedRemoteProject = async (
-    project: ZedRemoteProject,
-    strategy: ZedOpenStrategy = settingsForm.zedRemoteOpenStrategy || "addToFocusedWorkspace",
-  ) => {
-    const result = await run(() =>
-      call<ZedRemoteOpenResult>("open_zed_remote", {
-        payload: {
-          ssh: project.ssh,
-          hostId: project.hostId,
-          path: project.path,
-          strategy,
-          remember: settingsForm.zedRemoteProjectRegistryEnabled !== false,
-        },
-      }),
-    );
-    if (result) {
-      showResultNotice(t("Zed 远程打开"), result);
-      await refreshZedRemoteProjects(true);
-    }
-  };
-
-  const forgetZedRemoteProject = async (project: ZedRemoteProject) => {
-    const result = await run(() => call<ZedRemoteProjectsResult>("forget_zed_remote_project", { id: project.id }));
-    if (result) {
-      setZedRemoteProjects(result);
-      showResultNotice(t("Zed 远程项目"), result);
-    }
-  };
-
-  const requestDeleteLocalSession = (session: LocalSession) =>
-    call<DeleteLocalSessionResult>("delete_local_session", {
-      request: { sessionId: session.id, title: session.title, dbPath: session.dbPath },
-    });
-
-  const confirmSessionDelete = (title: string, message: string) =>
-    new Promise<boolean>((resolve) => {
-      setConfirmDialog({
-        title,
-        message,
-        confirmText: t("确认删除"),
-        cancelText: t("取消"),
-        resolve,
-      });
-    });
-
-  const deleteLocalSession = async (session: LocalSession) => {
-    const title = session.title || session.id;
-    const confirmed = await confirmSessionDelete(t("删除会话"), tf("删除会话“{0}”？此操作会删除本地数据库记录和 rollout 文件，并创建备份。", [title]));
-    if (!confirmed) return;
-    const result = await run(() => requestDeleteLocalSession(session));
-    if (result) {
-      showResultNotice(t("会话删除"), result);
-      await refreshLocalSessions(true);
-    }
-  };
-
-  const deleteLocalSessions = async (sessions: LocalSession[]) => {
-    const uniqueSessions = Array.from(new Map(sessions.map((session) => [session.id, session])).values());
-    if (!uniqueSessions.length) {
-      showNotice(t("批量删除会话"), t("请先选择要删除的会话。"), "failed");
-      return;
-    }
-    const preview = uniqueSessions
-      .slice(0, 6)
-      .map((session) => `- ${truncateSessionDeletePreview(session.title || session.id)}`)
-      .join("\n");
-    const extraCount = uniqueSessions.length > 6 ? tf("\n...以及另外 {0} 个会话", [uniqueSessions.length - 6]) : "";
-    const confirmed = await confirmSessionDelete(
-      t("批量删除会话"),
-      tf("删除选中的 {0} 个会话？此操作会删除本地数据库记录和 rollout 文件，并为每个会话创建备份。\n\n{1}{2}", [uniqueSessions.length, preview, extraCount]),
-    );
-    if (!confirmed) return;
-
-    let succeeded = 0;
-    const failed: string[] = [];
     for (const session of uniqueSessions) {
       const result = await run(() => requestDeleteLocalSession(session));
       if (result && isSuccessStatus(result.status)) {
@@ -1296,68 +972,6 @@ export function App() {
     if (result) {
       setWatcher(result);
       showNotice(t("Watcher 操作"), result.message, result.status);
-    }
-  };
-
-  const checkUpdate = async (silent = false) => {
-    const result = await run(() => call<UpdateResult>("check_update"));
-    if (result) {
-      setUpdate(result);
-      if (!silent || result.updateAvailable) {
-        showNotice(t("GitHub Release 检查"), result.message, result.status);
-      }
-    }
-  };
-
-  const performUpdate = async () => {
-    if (updateInstallProgress.active) return;
-    const release =
-      update?.latestVersion && update.assetName && update.assetUrl
-        ? {
-            version: update.latestVersion,
-            url: "",
-            body: update.releaseSummary ?? "",
-            asset_name: update.assetName,
-            asset_url: update.assetUrl,
-          }
-        : null;
-    setUpdateInstallProgress({
-      active: true,
-      percent: 8,
-      message: t("正在准备安装包下载…"),
-    });
-    const progressTimer = window.setInterval(() => {
-      setUpdateInstallProgress((current) => {
-        if (!current.active) return current;
-        const nextPercent = Math.min(92, current.percent + 10);
-        const message =
-          nextPercent < 32
-            ? t("正在获取 GitHub Release 信息…")
-            : nextPercent < 72
-              ? t("正在下载安装包…")
-              : t("正在启动安装包…");
-        return { ...current, percent: nextPercent, message };
-      });
-    }, 500);
-    try {
-      const result = await run(() => call<UpdateResult>("perform_update", { release }));
-      if (result) {
-        setUpdate(result);
-        setUpdateInstallProgress({
-          active: false,
-          percent: result.progress ?? 100,
-          message: result.message,
-        });
-        showNotice(t("更新安装"), result.message, result.status);
-      } else {
-        setUpdateInstallProgress({
-          active: false,
-          percent: 100,
-          message: t("安装包更新失败，请查看错误提示后重试。"),
-        });
-      }
-    } finally {
-      window.clearInterval(progressTimer);
     }
   };
 
@@ -1778,11 +1392,8 @@ export function App() {
   useEffect(() => {
     void (async () => {
       const startup = await run(() => call<StartupResult>("startup_options"));
-      if (startup?.showUpdate) {
         setRoute("about");
-        void checkUpdate(false);
       } else {
-        void checkUpdate(true);
       }
       await refreshOverview(true);
       await refreshSettings(true);
@@ -1841,8 +1452,6 @@ export function App() {
       installEntrypoints,
       uninstallEntrypoints,
       repairShortcuts,
-      checkUpdate,
-      performUpdate,
       saveSettings,
       saveSettingsValue,
       refreshSettings,
@@ -1980,9 +1589,8 @@ export function App() {
       disableWatcher: () => watcherAction("disable_watcher"),
       toggleTheme: () => setTheme((current) => (current === "dark" ? "light" : "dark")),
     }),
-    [route, launchForm, settingsForm, settings, removeOwnedData, update, updateInstallProgress.active, logs, diagnostics, theme, relayFiles, localSessions, zedRemoteProjects, selectedProviderSyncTarget, envConflicts, ccsProviders],
+    [route, launchForm, settingsForm, settings, removeOwnedData, logs, diagnostics, theme, relayFiles, localSessions, zedRemoteProjects, selectedProviderSyncTarget, envConflicts, ccsProviders],
   );
-  const hasUpdate = update?.updateAvailable === true;
 
   return (
     <div className={`shell ${theme}`}>
@@ -1992,19 +1600,6 @@ export function App() {
           <div className="brand-copy">
             <div className="brand-title-row">
               <div className="brand-title">Codex++</div>
-              {hasUpdate ? (
-                <button
-                  className="update-dot"
-                  onClick={() => {
-                    setRoute("about");
-                    void checkUpdate(false);
-                  }}
-                  title={tf("发现新版本 {0}", [update?.latestVersion ?? ""])}
-                  type="button"
-                >
-                  <CircleArrowUp className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : null}
             </div>
             <div className="brand-subtitle">{t("管理控制台")}</div>
           </div>
@@ -2131,8 +1726,6 @@ export function App() {
           {route === "about" ? (
             <AboutScreen
               overview={overview}
-              update={update}
-              updateInstallProgress={updateInstallProgress}
               logs={logs}
               diagnostics={diagnostics}
               actions={actions}
@@ -2184,8 +1777,6 @@ type Actions = {
   installEntrypoints: () => Promise<void>;
   uninstallEntrypoints: () => Promise<void>;
   repairShortcuts: () => Promise<void>;
-  checkUpdate: () => Promise<void>;
-  performUpdate: () => Promise<void>;
   saveSettings: () => Promise<void>;
   saveSettingsValue: (settings: BackendSettings, silent?: boolean) => Promise<void>;
   refreshSettings: (silent?: boolean) => Promise<BackendSettings | null>;
@@ -2264,40 +1855,6 @@ function OverviewScreen({
   const health = healthItems(overview);
   return (
     <>
-      <Panel className="jojocode-overview">
-        <CardContent>
-          <div className="jojocode-overview-layout">
-            <div className="jojocode-overview-main">
-              <div className="jojocode-overview-mark">
-                <Network className="h-5 w-5" />
-              </div>
-              <div>
-                <span className="eyebrow">{t("官方中转站")}</span>
-                <h2>JOJO Code</h2>
-                <p>
-                  {t("Codex++ 官方中转站，主打稳定接入和划算价格，支持 GPT-5.6 全系列、Fable 5、Sonnet 5、GPT-5.5、GPT-5.4、Claude Opus 4.8、Claude Opus 4.7、gpt-image-2 等模型与图像能力。")}
-                </p>
-              </div>
-            </div>
-            <div className="jojocode-overview-side">
-              <div className="jojocode-model-tags">
-                <span>GPT-5.6 全系列</span>
-                <span>Fable 5</span>
-                <span>Sonnet 5</span>
-                <span>GPT-5.5</span>
-                <span>GPT-5.4</span>
-                <span>Opus 4.8</span>
-                <span>Opus 4.7</span>
-                <span>gpt-image-2</span>
-              </div>
-              <Button onClick={() => void actions.openExternalUrl("https://jojocode.com/")}>
-                <ExternalLink className="h-4 w-4" />
-                {t("打开 JOJO Code")}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Panel>
       <Panel>
         <CardHead title={t("健康检查")} detail={t("概览只展示关键问题，具体配置在对应页面处理")} />
         <CardContent>
@@ -3253,15 +2810,11 @@ function MaintenanceScreen({
 
 function AboutScreen({
   overview,
-  update,
-  updateInstallProgress,
   logs,
   diagnostics,
   actions,
 }: {
   overview: OverviewResult | null;
-  update: UpdateResult | null;
-  updateInstallProgress: TaskProgress;
   logs: LogsResult | null;
   diagnostics: DiagnosticsResult | null;
   actions: Actions;
@@ -3297,213 +2850,6 @@ function AboutScreen({
         </CardContent>
       </Panel>
       <Panel>
-        <CardHead title={t("GitHub Release 更新")} detail={tf("当前版本 {0}", [overview?.current_version ?? update?.currentVersion ?? "-"])} />
-        <CardContent>
-          <div className="metric-list">
-            <Metric label={t("状态")} value={update?.status ?? "not_checked"} />
-            <Metric label={t("最新版本")} value={update?.latestVersion ?? t("未检查")} />
-            <Metric label={t("资源")} value={update?.assetName ?? "-"} />
-            <Metric label={t("进度")} value={`${update?.progress ?? 0}%`} />
-          </div>
-          <Textarea className="log-view" readOnly value={update?.releaseSummary || update?.message || t("尚未检查 GitHub Release；更新会下载并启动安装包。")} />
-          <TaskProgressBox completedTitle={t("上次更新结果")} progress={updateInstallProgress} title={t("安装包更新进度")} />
-          <Toolbar>
-            <Button onClick={() => void actions.checkUpdate()}>{t("检查更新")}</Button>
-            <Button disabled={updateInstallProgress.active} variant="secondary" onClick={() => void actions.performUpdate()}>
-              {updateInstallProgress.active ? t("正在下载安装包…") : t("下载并运行安装包")}
-            </Button>
-          </Toolbar>
-        </CardContent>
-      </Panel>
-      <LogsPanel logs={logs} actions={actions} />
-      <DiagnosticsPanel diagnostics={diagnostics} actions={actions} />
-    </>
-  );
-}
-
-function SettingsScreen({
-  settings,
-  theme,
-  form,
-  onFormChange,
-  actions,
-}: {
-  settings: SettingsResult | null;
-  theme: Theme;
-  form: BackendSettings;
-  onFormChange: (value: BackendSettings) => void;
-  actions: Actions;
-}) {
-  return (
-    <>
-      <Panel>
-        <CardHead title={t("基础设置")} detail={settings?.settings_path ?? ""} />
-        <CardContent>
-          <div className="theme-row">
-            <div>
-              <strong>{t("界面主题")}</strong>
-              <span>{t("当前为")}{theme === "dark" ? t("深色") : t("浅色")}{t("模式。")}</span>
-            </div>
-            <Button variant="secondary" onClick={actions.toggleTheme}>{t("切换主题")}</Button>
-          </div>
-          <Field label={t("供应商测试模型")}>
-            <Input
-              value={form.relayTestModel}
-              onChange={(event) => onFormChange({ ...form, relayTestModel: event.currentTarget.value })}
-              placeholder={t("例如 gpt-5.4-mini")}
-            />
-          </Field>
-          <div className="settings-block stepwise-settings-block">
-            <div className="section-title">Stepwise</div>
-            <div className="stepwise-settings-section">{t("连接")}</div>
-            <div className="form-row">
-              <Field label="Base URL">
-                <Input
-                  value={form.codexAppStepwiseBaseUrl}
-                  onChange={(event) => onFormChange({ ...form, codexAppStepwiseBaseUrl: event.currentTarget.value })}
-                  placeholder="https://api.example.com/v1"
-                />
-              </Field>
-              <Field label="Model">
-                <Input
-                  value={form.codexAppStepwiseModel}
-                  onChange={(event) => onFormChange({ ...form, codexAppStepwiseModel: event.currentTarget.value })}
-                  placeholder={t("例如 gpt-5.4-mini")}
-                />
-              </Field>
-            </div>
-            <Field label="API Key">
-              <Input
-                type="password"
-                value={form.codexAppStepwiseApiKey}
-                onChange={(event) => onFormChange({ ...form, codexAppStepwiseApiKey: event.currentTarget.value })}
-              />
-            </Field>
-            <details className="stepwise-advanced">
-              <summary>{t("高级参数")}</summary>
-              <div className="form-row">
-                <Field label={t("API Key 环境变量")}>
-                  <Input
-                    value={form.codexAppStepwiseApiKeyEnv}
-                    onChange={(event) => onFormChange({ ...form, codexAppStepwiseApiKeyEnv: event.currentTarget.value })}
-                  />
-                </Field>
-                <Field label={t("最多建议数")}>
-                  <Input
-                    max={6}
-                    min={0}
-                    type="number"
-                    value={form.codexAppStepwiseMaxItems}
-                    onChange={(event) =>
-                      onFormChange({ ...form, codexAppStepwiseMaxItems: clampNumber(Number(event.currentTarget.value), 0, 6) })
-                    }
-                  />
-                </Field>
-              </div>
-              <div className="form-row">
-                <Field label={t("超时毫秒")}>
-                  <Input
-                    min={1000}
-                    type="number"
-                    value={form.codexAppStepwiseTimeoutMs}
-                    onChange={(event) =>
-                      onFormChange({ ...form, codexAppStepwiseTimeoutMs: clampNumber(Number(event.currentTarget.value), 1000, 60000) })
-                    }
-                  />
-                </Field>
-                <Field label={t("最大输入字符")}>
-                  <Input
-                    min={1000}
-                    type="number"
-                    value={form.codexAppStepwiseMaxInputChars}
-                    onChange={(event) =>
-                      onFormChange({ ...form, codexAppStepwiseMaxInputChars: clampNumber(Number(event.currentTarget.value), 1000, 24000) })
-                    }
-                  />
-                </Field>
-              </div>
-              <Field label={t("最大输出 tokens")}>
-                <Input
-                  min={100}
-                  type="number"
-                  value={form.codexAppStepwiseMaxOutputTokens}
-                  onChange={(event) =>
-                    onFormChange({ ...form, codexAppStepwiseMaxOutputTokens: clampNumber(Number(event.currentTarget.value), 100, 4000) })
-                  }
-                />
-              </Field>
-            </details>
-            <div className="toolbar stepwise-settings-actions">
-              <Button variant="secondary" onClick={() => void actions.testStepwiseSettings(form)}>{t("测试连接")}</Button>
-              <Button onClick={() => void actions.saveSettings()}>{t("保存设置")}</Button>
-            </div>
-          </div>
-          <div className="settings-block">
-            <label className="check-row">
-              <input
-                checked={form.codexAppImageOverlayEnabled}
-                onChange={(event) =>
-                  onFormChange({ ...form, codexAppImageOverlayEnabled: event.currentTarget.checked })
-                }
-                type="checkbox"
-              />
-              <span>{t("启用 Codex 图片覆盖层")}</span>
-            </label>
-            <div className="form-row">
-              <Field label={t("覆盖图片")}>
-                <Input
-                  value={form.codexAppImageOverlayPath}
-                  onChange={(event) => onFormChange({ ...form, codexAppImageOverlayPath: event.currentTarget.value })}
-                  placeholder={t("选择 png / jpg / webp / gif / bmp")}
-                />
-              </Field>
-              <Toolbar>
-                <Button variant="secondary" onClick={() => void actions.chooseImageOverlayPath()}>
-                  {t("选择图片")}
-                </Button>
-              </Toolbar>
-            </div>
-            <Field label={tf("透明度 {0}%", [form.codexAppImageOverlayOpacity])}>
-              <Input
-                min={1}
-                max={100}
-                type="range"
-                value={form.codexAppImageOverlayOpacity}
-                onChange={(event) =>
-                  onFormChange({
-                    ...form,
-                    codexAppImageOverlayOpacity: clampNumber(Number(event.currentTarget.value), 1, 100),
-                  })
-                }
-              />
-            </Field>
-            <Field label={t("背景适配方式")}>
-              <select
-                className="select-input"
-                value={form.codexAppImageOverlayFitMode}
-                onChange={(event) =>
-                  onFormChange({
-                    ...form,
-                    codexAppImageOverlayFitMode: event.currentTarget.value as ImageOverlayFitMode,
-                  })
-                }
-              >
-                <option value="fill">{t("填充")}</option>
-                <option value="fit">{t("适应")}</option>
-                <option value="stretch">{t("拉伸")}</option>
-                <option value="tile">{t("平铺")}</option>
-                <option value="center">{t("居中")}</option>
-              </select>
-            </Field>
-          </div>
-          <Toolbar>
-            <Button onClick={() => void actions.saveSettings()}>{t("保存设置")}</Button>
-            <Button variant="secondary" onClick={() => void actions.resetImageOverlaySettings()}>
-              {t("重置背景")}
-            </Button>
-          </Toolbar>
-        </CardContent>
-      </Panel>
       <Panel>
         <CardHead title={t("Codex 启动参数")} detail={t("启动 Codex App 时追加到默认 CDP 参数后。留空则保持默认启动行为。")} />
         <CardContent>
@@ -5196,7 +4542,7 @@ function routeSubtitle(route: Route) {
     zedRemote: t("管理 Codex SSH 项目并加入 Zed workspace"),
     userScripts: t("内置和用户自定义脚本清单"),
     maintenance: t("入口安装、修复、Watcher 与手动启动"),
-    about: t("版本信息、项目链接、GitHub Release 更新、日志与诊断"),
+    about: t("版本信息、项目链接、日志与诊断"),
     settings: t("主题和启动参数"),
   };
   return subtitles[route];
@@ -6902,7 +6248,7 @@ function loadInitialTheme(): Theme {
 function loadInitialRoute(): Route {
   if (typeof window === "undefined") return "overview";
   const params = new URLSearchParams(window.location.search);
-  if (params.get("showUpdate") === "1" || window.location.hash === "#about") {
+  if (window.location.hash === "#about") {
     return "about";
   }
   return "overview";

@@ -48,28 +48,8 @@ Windows 安装包会创建桌面和开始菜单快捷方式。macOS DMG 会安�
 - Zed 打开入口：识别远程 SSH 上下文后，可从 Codex 直接打开对应文件到 Zed Remote Development。
 - 按模型粒度配置上下文窗口：「模型列表」分为左右两列，左侧填模型名，右侧填上下文窗口（如 `1M`、`200K` 或 `1000000`）；GPT Work++ 自动生成 `model_catalog_json` 并注入 `config.toml`，切换模型即生效。右侧留空则使用 Codex 默认长度。
 - Upstream worktree 创建：可从 `upstream/<base-branch>` 创建新 worktree，创建前自动 fetch 远端分支，降低从陈旧本地 HEAD 派生导致的冲突风险。
-- GitHub Release 自动更新，管理工具和静默启动器都会检测可用更新。
 - Windows 单实例、无黑框启动、管理员权限清单、系统桌面路径识别。
 - macOS x64/arm64 分架构 DMG，静默入口隐藏 Dock 图标。
-
-## 痛点与解决
-
-API Key 登录模式下，Codex 原生插件市场会提示需要登录 ChatGPT，导致插件功能无法正常使用：
-
-![API Key 模式下插件市场不可用](docs/images/pain-plugin-disabled.png)
-
-Codex 原生会话列表只有归档入口，没有真正的删除按钮：
-
-![原生会话列表缺少删除能力](docs/images/pain-no-delete-button.png)
-
-GPT Work++ 启动后会解锁插件市场能力，并在会话列表悬停时显示删除按钮：
-
-![GPT Work++ 解锁插件市场并添加删除按钮](docs/images/solution-plugin-and-delete.png)
-
-顶部菜单栏会出现 `GPT Work++`，可以查看后端状态并打开设置面板：
-
-![GPT Work++ 后端状态指示灯](docs/images/backend-status-indicator.png)
-![GPT Work++ 设置面板](docs/images/settings-panel.png)
 
 ## 中转注入
 
@@ -118,11 +98,9 @@ experimental_bearer_token = "sk-..."
 
 如果启用中转注入模式，插件市场解锁不再需要，界面会提示"中转注入模式下无需开启"。会话删除、导出、移动、粘贴修复和用户脚本等增强仍可继续使用。
 
-## 自动更新与安装包
+## 安装包
 
-GPT Work++ 通过 GitHub Release 发布安装包。Windows 会生成 NSIS 安装程序，macOS 会生成 Intel x64 和 Apple Silicon arm64 两个 DMG。
-
-管理工具的“关于”页可以检查并启动更新。静默启动器发现新版本时会拉起管理工具并进入更新提示。
+GPT Work++ 发布 Windows NSIS 安装程序和 macOS DMG（Intel x64 / Apple Silicon arm64）。
 
 ## 数据位置
 

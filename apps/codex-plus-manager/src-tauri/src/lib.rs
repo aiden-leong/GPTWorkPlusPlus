@@ -24,15 +24,10 @@ pub fn run() {
     let Some(_guard) = acquire_single_instance_guard() else {
         return;
     };
-    let show_update = commands::startup_should_show_update();
     let run_result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(move |app| {
-            let url = if show_update {
-                "/index.html?showUpdate=1"
-            } else {
-                "/index.html"
-            };
+            let url = "/index.html";
             let mut main_window_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App(url.into()))
                     .title("Codex++ 管理工具")
@@ -78,8 +73,6 @@ pub fn run() {
             commands::repair_plugin_marketplace,
             commands::remote_plugin_marketplace_status,
             commands::repair_remote_plugin_marketplace,
-            commands::check_update,
-            commands::perform_update,
             commands::load_watcher_state,
             commands::install_watcher,
             commands::uninstall_watcher,
