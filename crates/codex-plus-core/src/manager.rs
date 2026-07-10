@@ -20,16 +20,20 @@ use serde::Serialize;
 use serde_json::{Value, json};
 
 use crate::app_paths;
+use crate::ccs_import;
 use crate::codex_home;
 use crate::diagnostic_log;
 use crate::env_conflicts;
 use crate::install::{self, InstallActionResult};
 use crate::paths;
 use crate::plugin_marketplace;
+use crate::provider_import;
 use crate::relay_config::{self, CodexContextEntries};
 use crate::relay_switch;
+use crate::script_market;
 use crate::settings::{BackendSettings, RelayProfile, SettingsStore};
 use crate::status::{LaunchStatus, StatusStore};
+use crate::user_scripts::UserScriptManager;
 use crate::version;
 use crate::watcher;
 
@@ -72,6 +76,13 @@ pub struct SettingsPayload {
     pub settings: BackendSettings,
     pub settings_path: String,
     pub user_scripts: Value,
+}
+
+impl SettingsPayload {
+    /// 转成裸 Value，方便在 bridge path handler 里 `Ok(value.into_value())` 一行搞定。
+    pub fn into_value(self) -> Value {
+        serde_json::to_value(self).unwrap_or(Value::Null)
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -285,11 +296,23 @@ fn watcher_payload_value() -> WatcherPayload {
 }
 
 fn user_script_inventory_value() -> Value {
-    // 暂时返回空 inventory，等 user_scripts 移植到 bridge 后接真值
-    json!({
-        "enabled": true,
-        "scripts": []
-    })
+    default_user_script_manager()
+        .inventory()
+        .unwrap_or_else(|error| {
+            json!({
+                "enabled": true,
+                "scripts": [],
+                "error": error.to_string()
+            })
+        })
+}
+
+fn default_user_script_manager() -> UserScriptManager {
+    UserScriptManager::new(
+        paths::default_app_state_dir().join("builtin-scripts"),
+        paths::default_app_state_dir().join("user-scripts"),
+        paths::default_app_state_dir().join("user-scripts.json"),
+    )
 }
 
 fn settings_path_string() -> String {
@@ -934,57 +957,272 @@ pub async fn test_stepwise_settings(settings: BackendSettings) -> StepwiseTestPa
 }
 
 // =============================================================================
-// 暂时 stub 的端点 —— core 里没现成 API，等迁移完后逐个补
+// CCS providers（cc-switch / Claude Code Switch 供应商导入）
 // =============================================================================
 
 pub fn load_ccs_providers() -> Value {
-    json!({
-        "status": "skipped",
-        "db_path": "",
-        "providers": [],
-        "message": "CCS provider 读取暂未在 HTTP bridge 中实现"
-    })
+    let db_path = ccs_import::default_ccs_db_path();
+    match ccs_import::list_codex_providers_from_default_db() {
+        Ok(providers) => json!({
+            "dbPath": db_path.to_string_lossy().to_string(),
+            "providers": providers,
+        }),
+        Err(error) => {
+            log_manager_event(
+                "manager.load_ccs_providers_failed",
+                json!({"error": error.to_string()}),
+            );
+            json!({
+                "dbPath": db_path.to_string_lossy().to_string(),
+                "providers": [],
+                "error": error.to_string(),
+            })
+        }
+    }
 }
 
-pub fn import_ccs_providers() -> Value {
-    json!({
-        "status": "skipped",
-        "imported": 0,
-        "skipped": 0,
-        "message": "CCS provider 导入暂未在 HTTP bridge 中实现"
-    })
+pub fn import_ccs_providers() -> SettingsPayload {
+    let providers = match ccs_import::list_codex_providers_from_default_db() {
+        Ok(providers) => providers,
+        Err(error) => {
+            log_manager_event(
+                "manager.import_ccs_providers_failed",
+                json!({"error": error.to_string()}),
+            );
+            return load_settings();
+        }
+    };
+
+    let store = SettingsStore::default();
+    let mut settings = store.load().unwrap_or_default();
+    let mut existing_keys: Vec<String> = settings
+        .relay_profiles
+        .iter()
+        .map(ccs_import::imported_provider_identity)
+        .collect();
+    let mut existing_ids: Vec<String> = settings
+        .relay_profiles
+        .iter()
+        .map(|profile| profile.id.clone())
+        .collect();
+    let mut imported = 0usize;
+
+    for provider in providers {
+        let key = ccs_import::provider_identity_from_ccs(&provider);
+        if existing_keys.iter().any(|existing| existing == &key) {
+            continue;
+        }
+        let profile = ccs_import::relay_profile_from_ccs(&provider, &existing_ids);
+        existing_ids.push(profile.id.clone());
+        existing_keys.push(key);
+        settings.relay_profiles.push(profile);
+        imported += 1;
+    }
+
+    let _ = store.save(&settings);
+    log_manager_event(
+        "manager.import_ccs_providers",
+        json!({"imported": imported}),
+    );
+    load_settings()
 }
 
 pub fn load_pending_provider_import() -> Value {
-    json!({
-        "status": "skipped",
-        "pending": null,
-        "db_path": null
-    })
+    let db_path = ccs_import::default_ccs_db_path();
+    match provider_import::load_pending_provider_import() {
+        Ok(pending) => json!({
+            "pending": pending,
+            "dbPath": db_path.to_string_lossy().to_string(),
+        }),
+        Err(error) => {
+            log_manager_event(
+                "manager.load_pending_provider_import_failed",
+                json!({"error": error.to_string()}),
+            );
+            json!({
+                "pending": null,
+                "dbPath": db_path.to_string_lossy().to_string(),
+                "error": error.to_string(),
+            })
+        }
+    }
 }
 
-pub fn confirm_pending_provider_import() -> Value {
-    json!({"status": "skipped", "message": "Provider 导入确认暂未实现"})
+pub fn confirm_pending_provider_import(request: provider_import::ProviderImportRequest) -> SettingsPayload {
+    match provider_import::import_provider(request) {
+        Ok(_result) => {
+            log_manager_event("manager.confirm_provider_import", json!({}));
+            load_settings()
+        }
+        Err(error) => {
+            log_manager_event(
+                "manager.confirm_provider_import_failed",
+                json!({"error": error.to_string()}),
+            );
+            load_settings()
+        }
+    }
 }
 
 pub fn dismiss_pending_provider_import() -> Value {
-    json!({"status": "ok", "pending": null, "db_path": null})
+    match provider_import::clear_pending_provider_import() {
+        Ok(()) => json!({"pending": null}),
+        Err(error) => {
+            log_manager_event(
+                "manager.dismiss_pending_provider_import_failed",
+                json!({"error": error.to_string()}),
+            );
+            json!({"pending": null, "error": error.to_string()})
+        }
+    }
 }
+
+// =============================================================================
+// Script market + user scripts
+// =============================================================================
+
+pub async fn refresh_script_market() -> Value {
+    let url = script_market::DEFAULT_MARKET_INDEX_URL;
+    match script_market::fetch_market_manifest(url).await {
+        Ok(manifest) => {
+            let manager = default_user_script_manager();
+            let installed = manager.load_config().market.values().cloned().collect::<Vec<_>>();
+            json!({
+                "market": serde_json::to_value(&manifest).unwrap_or(Value::Null),
+                "installed": installed,
+            })
+        }
+        Err(error) => {
+            log_manager_event(
+                "manager.refresh_script_market_failed",
+                json!({"error": error.to_string()}),
+            );
+            json!({
+                "market": {"version": 0, "scripts": []},
+                "installed": [],
+                "error": error.to_string(),
+            })
+        }
+    }
+}
+
+pub async fn install_market_script(id: &str) -> Value {
+    let url = script_market::DEFAULT_MARKET_INDEX_URL;
+    let manager = default_user_script_manager();
+    let manifest = match script_market::fetch_market_manifest(url).await {
+        Ok(m) => m,
+        Err(error) => {
+            log_manager_event(
+                "manager.install_market_script_failed",
+                json!({"id": id, "stage": "fetch_manifest", "error": error.to_string()}),
+            );
+            return json!({
+                "error": error.to_string(),
+                "installed": [],
+            });
+        }
+    };
+    let Some(script) = manifest.scripts.into_iter().find(|s| s.id == id) else {
+        return json!({
+            "error": format!("market 中没有 id={id} 的脚本"),
+            "installed": [],
+        });
+    };
+    match script_market::install_market_script(&manager, &script).await {
+        Ok(()) => {
+            let _ = manager.record_market_install(&script);
+            log_manager_event(
+                "manager.install_market_script",
+                json!({"id": id}),
+            );
+            json!({
+                "installed": [{"id": id}],
+            })
+        }
+        Err(error) => {
+            log_manager_event(
+                "manager.install_market_script_failed",
+                json!({"id": id, "stage": "install", "error": error.to_string()}),
+            );
+            json!({
+                "error": error.to_string(),
+                "installed": [],
+            })
+        }
+    }
+}
+
+pub fn set_user_script_enabled(key: &str, enabled: bool) -> Value {
+    let manager = default_user_script_manager();
+    match manager.set_script_enabled(key, enabled) {
+        Ok(_config) => {
+            log_manager_event(
+                "manager.set_user_script_enabled",
+                json!({"key": key, "enabled": enabled}),
+            );
+            user_script_inventory_value()
+        }
+        Err(error) => {
+            log_manager_event(
+                "manager.set_user_script_enabled_failed",
+                json!({"key": key, "error": error.to_string()}),
+            );
+            json!({
+                "key": key,
+                "enabled": enabled,
+                "error": error.to_string(),
+            })
+        }
+    }
+}
+
+pub fn delete_user_script(key: &str) -> Value {
+    let manager = default_user_script_manager();
+    match manager.delete_user_script(key) {
+        Ok(_config) => {
+            log_manager_event(
+                "manager.delete_user_script",
+                json!({"key": key}),
+            );
+            user_script_inventory_value()
+        }
+        Err(error) => {
+            log_manager_event(
+                "manager.delete_user_script_failed",
+                json!({"key": key, "error": error.to_string()}),
+            );
+            json!({
+                "key": key,
+                "error": error.to_string(),
+            })
+        }
+    }
+}
+
+// =============================================================================
+// Local sessions（暂未实现 —— 需要从 codex-plus-data 迁移 SQLite 逻辑，
+// core 不能依赖 data 形成循环依赖，等迁移路径确定后实现）
+// =============================================================================
 
 pub fn list_local_sessions() -> Value {
     json!({
         "status": "skipped",
-        "db_path": "",
-        "sessions": []
+        "dbPath": "",
+        "sessions": [],
+        "message": "Local sessions 暂未在 HTTP bridge 中实现（等待 core/data 重构）"
     })
 }
 
 pub fn delete_local_session() -> Value {
     json!({
         "status": "skipped",
-        "message": "本地 session 删除暂未在 HTTP bridge 中实现"
+        "message": "Local sessions 删除暂未在 HTTP bridge 中实现"
     })
 }
+
+// =============================================================================
+// 仍然 stub 的端点
+// =============================================================================
 
 pub fn fetch_relay_profile_models() -> Value {
     json!({"status": "skipped", "models": [], "endpoint": ""})
@@ -1012,31 +1250,6 @@ pub fn repair_remote_plugin_marketplace() -> Value {
     json!({
         "status": "skipped",
         "message": "Remote plugin marketplace 修复暂未在 HTTP bridge 中实现"
-    })
-}
-
-pub fn refresh_script_market() -> Value {
-    json!({"status": "skipped", "market": {}, "installed": []})
-}
-
-pub fn install_market_script(id: &str) -> Value {
-    json!({"status": "skipped", "installed_id": id, "installed": []})
-}
-
-pub fn set_user_script_enabled(key: &str, enabled: bool) -> Value {
-    json!({
-        "status": "skipped",
-        "key": key,
-        "enabled": enabled,
-        "message": "User script enabled 切换暂未在 HTTP bridge 中实现"
-    })
-}
-
-pub fn delete_user_script(key: &str) -> Value {
-    json!({
-        "status": "skipped",
-        "key": key,
-        "message": "User script 删除暂未在 HTTP bridge 中实现"
     })
 }
 

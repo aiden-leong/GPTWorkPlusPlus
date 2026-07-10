@@ -347,9 +347,9 @@ pub async fn handle_bridge_request(
         }
         // ====== 暂时 stub 的端点 ======
         "/manager/load-ccs-providers" => Ok(crate::manager::load_ccs_providers()),
-        "/manager/import-ccs-providers" => Ok(crate::manager::import_ccs_providers()),
+        "/manager/import-ccs-providers" => Ok(crate::manager::import_ccs_providers().into_value()),
         "/manager/load-pending-provider-import" => Ok(crate::manager::load_pending_provider_import()),
-        "/manager/confirm-pending-provider-import" => Ok(crate::manager::confirm_pending_provider_import()),
+        "/manager/confirm-pending-provider-import" => manager_confirm_pending_provider_import(payload.clone()),
         "/manager/dismiss-pending-provider-import" => Ok(crate::manager::dismiss_pending_provider_import()),
         "/manager/list-local-sessions" => Ok(crate::manager::list_local_sessions()),
         "/manager/delete-local-session" => Ok(crate::manager::delete_local_session()),
@@ -357,10 +357,10 @@ pub async fn handle_bridge_request(
         "/manager/diagnose-relay-profile" => Ok(crate::manager::diagnose_relay_profile()),
         "/manager/repair-plugin-marketplace" => Ok(crate::manager::repair_plugin_marketplace()),
         "/manager/repair-remote-plugin-marketplace" => Ok(crate::manager::repair_remote_plugin_marketplace()),
-        "/manager/refresh-script-market" => Ok(crate::manager::refresh_script_market()),
+        "/manager/refresh-script-market" => Ok(crate::manager::refresh_script_market().await),
         "/manager/install-market-script" => {
             let id = payload.get("id").and_then(Value::as_str).unwrap_or("");
-            Ok(crate::manager::install_market_script(id))
+            Ok(crate::manager::install_market_script(id).await)
         }
         "/manager/set-user-script-enabled" => {
             let key = payload.get("key").and_then(Value::as_str).unwrap_or("");
@@ -441,7 +441,7 @@ pub async fn handle_bridge_request(
         }
     };
 
-    let response = result.unwrap_or_else(|error| failed_from_error(&payload, error));
+    let response = result.unwrap_or_else(|error| failed_from_error(&payload.clone(), error));
     let _ = crate::diagnostic_log::append_diagnostic_log(
         "bridge.response",
         json!({
@@ -1169,4 +1169,13 @@ async fn manager_test_stepwise_settings(payload: Value) -> anyhow::Result<Value>
         serde_json::to_value(result).unwrap_or(Value::Null),
         "stepwise 测试完成。",
     ))
+}
+
+fn manager_confirm_pending_provider_import(payload: Value) -> anyhow::Result<Value> {
+    let request: crate::provider_import::ProviderImportRequest = serde_json::from_value(
+        payload.get("request").cloned().unwrap_or(payload),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 request 失败：{error}"))?;
+    let result = crate::manager::confirm_pending_provider_import(request);
+    Ok(wrap_ok_value(result.into_value(), "provider 已导入。"))
 }
