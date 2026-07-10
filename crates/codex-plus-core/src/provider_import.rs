@@ -376,3 +376,4 @@ fn default_relay_mode() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+}

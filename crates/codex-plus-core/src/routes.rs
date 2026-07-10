@@ -467,6 +467,15 @@ impl BridgeRuntimeService for CoreRuntimeService {
         Ok(crate::model_catalog::read_codex_model_catalog().await)
     }
 
+    async fn ads(&self) -> anyhow::Result<Value> {
+        // 默认实现：返回空广告列表。具体投放逻辑可由调用方（如 launcher）
+        // 在自定义 `BridgeRuntimeService` 实现中覆盖。
+        Ok(serde_json::json!({
+            "version": 1,
+            "ads": []
+        }))
+    }
+
     async fn zed_remote_status(&self) -> anyhow::Result<Value> {
         Ok(crate::zed_remote::zed_remote_status())
     }

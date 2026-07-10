@@ -9,6 +9,7 @@ pub mod codex_sqlite;
 mod computer_use_guard;
 pub mod diagnostic_log;
 pub mod env_conflicts;
+pub mod http_api;
 pub mod http_client;
 pub mod install;
 pub mod launcher;
