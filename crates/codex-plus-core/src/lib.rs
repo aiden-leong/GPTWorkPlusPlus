@@ -13,6 +13,7 @@ pub mod http_api;
 pub mod http_client;
 pub mod install;
 pub mod launcher;
+pub mod manager;
 pub mod model_catalog;
 pub mod model_suffix;
 pub mod models;

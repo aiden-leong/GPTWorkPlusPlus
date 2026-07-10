@@ -201,6 +201,184 @@ pub async fn handle_bridge_request(
         "/stepwise/test" => {
             stepwise_test_value(ctx.settings.get_settings().await, payload.clone()).await
         }
+        // ====== Manager 业务层（替代原 Tauri commands.rs） ======
+        "/manager/backend-version" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::backend_version()).unwrap_or(Value::Null),
+            "后端版本已读取。",
+        )),
+        "/manager/startup-options" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::startup_options()).unwrap_or(Value::Null),
+            "启动参数已读取。",
+        )),
+        "/manager/load-overview" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::load_overview()).unwrap_or(Value::Null),
+            "概览已加载。",
+        )),
+        "/manager/load-settings" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::load_settings()).unwrap_or(Value::Null),
+            "设置已加载。",
+        )),
+        "/manager/save-settings" => manager_save_settings(payload.clone()),
+        "/manager/reset-settings" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::reset_settings()).unwrap_or(Value::Null),
+            "设置已重置。",
+        )),
+        "/manager/reset-image-overlay-settings" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::reset_image_overlay_settings()).unwrap_or(Value::Null),
+            "图像覆盖配置已重置。",
+        )),
+        "/manager/load-watcher-state" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::load_watcher_state()).unwrap_or(Value::Null),
+            "watcher 状态已加载。",
+        )),
+        "/manager/install-watcher" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::install_watcher()).unwrap_or(Value::Null),
+            "watcher 已安装。",
+        )),
+        "/manager/uninstall-watcher" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::uninstall_watcher()).unwrap_or(Value::Null),
+            "watcher 已卸载。",
+        )),
+        "/manager/enable-watcher" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::enable_watcher()).unwrap_or(Value::Null),
+            "watcher 已启用。",
+        )),
+        "/manager/disable-watcher" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::disable_watcher()).unwrap_or(Value::Null),
+            "watcher 已禁用。",
+        )),
+        "/manager/read-latest-logs" => {
+            let lines = payload
+                .get("lines")
+                .and_then(Value::as_u64)
+                .unwrap_or(crate::manager::default_log_lines() as u64)
+                as usize;
+            Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::read_latest_logs(lines)).unwrap_or(Value::Null),
+            "日志已读取。",
+        ))
+        }
+        "/manager/copy-diagnostics" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::copy_diagnostics()).unwrap_or(Value::Null),
+            "诊断信息已生成。",
+        )),
+        "/manager/relay-status" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::relay_status()).unwrap_or(Value::Null),
+            "供应商状态已读取。",
+        )),
+        "/manager/read-relay-files" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::read_relay_files()).unwrap_or(Value::Null),
+            "配置文件内容已读取。",
+        )),
+        "/manager/save-relay-file" => manager_save_relay_file(payload.clone()),
+        "/manager/switch-relay-profile" => manager_switch_relay_profile(payload.clone()),
+        "/manager/backfill-relay-profile-from-live" => manager_backfill_relay_profile(payload.clone()),
+        "/manager/list-context-entries" => manager_list_context_entries(payload.clone()),
+        "/manager/read-live-context-entries" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::read_live_context_entries()).unwrap_or(Value::Null),
+            "live context 已读取。",
+        )),
+        "/manager/upsert-context-entry" => manager_upsert_context_entry(payload.clone()),
+        "/manager/sync-live-context-entries" => manager_sync_live_context_entries(payload.clone()),
+        "/manager/delete-context-entry" => manager_delete_context_entry(payload.clone()),
+        "/manager/extract-relay-common-config" => manager_extract_relay_common_config(payload.clone()),
+        "/manager/check-env-conflicts" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::check_env_conflicts()).unwrap_or(Value::Null),
+            "环境变量冲突已检测。",
+        )),
+        "/manager/remove-env-conflicts" => {
+            let names: Vec<String> = payload
+                .get("names")
+                .and_then(Value::as_array)
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
+                .unwrap_or_default();
+            Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::remove_env_conflicts(names)).unwrap_or(Value::Null),
+            "环境变量已删除。",
+        ))
+        }
+        "/manager/install-entrypoints" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::install_entrypoints().await).unwrap_or(Value::Null),
+            "入口已安装。",
+        )),
+        "/manager/uninstall-entrypoints" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::uninstall_entrypoints().await).unwrap_or(Value::Null),
+            "入口已卸载。",
+        )),
+        "/manager/repair-shortcuts" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::repair_shortcuts().await).unwrap_or(Value::Null),
+            "快捷方式已修复。",
+        )),
+        "/manager/plugin-marketplace-status" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::plugin_marketplace_status()).unwrap_or(Value::Null),
+            "插件市场状态已读取。",
+        )),
+        "/manager/remote-plugin-marketplace-status" => Ok(wrap_ok_value(
+            serde_json::to_value(crate::manager::remote_plugin_marketplace_status()).unwrap_or(Value::Null),
+            "远端插件市场状态已读取。",
+        )),
+        "/manager/test-relay-profile" => manager_test_relay_profile(payload.clone()).await,
+        "/manager/test-stepwise-settings" => manager_test_stepwise_settings(payload.clone()).await,
+        "/manager/apply-relay-injection" => Ok(crate::manager::apply_relay_injection()),
+        "/manager/apply-pure-api-injection" => Ok(crate::manager::apply_pure_api_injection()),
+        "/manager/clear-relay-injection" => Ok(crate::manager::clear_relay_injection()),
+        "/manager/launch-codex-plus" => Ok(crate::manager::launch_codex_plus(
+            payload.get("app_path").and_then(Value::as_str).unwrap_or(""),
+            payload.get("debug_port").and_then(Value::as_u64).unwrap_or(crate::manager::default_debug_port() as u64) as u16,
+            payload.get("helper_port").and_then(Value::as_u64).unwrap_or(crate::manager::default_helper_port() as u64) as u16,
+        )),
+        "/manager/restart-codex-plus" => Ok(crate::manager::restart_codex_plus(
+            payload.get("app_path").and_then(Value::as_str).unwrap_or(""),
+            payload.get("debug_port").and_then(Value::as_u64).unwrap_or(crate::manager::default_debug_port() as u64) as u16,
+            payload.get("helper_port").and_then(Value::as_u64).unwrap_or(crate::manager::default_helper_port() as u64) as u16,
+        )),
+        "/manager/open-external-url" => {
+            let url = payload.get("url").and_then(Value::as_str).unwrap_or("");
+            Ok(crate::manager::open_external_url(url))
+        }
+        "/manager/write-diagnostic-event" => {
+            let event = payload.get("event").and_then(Value::as_str).unwrap_or("");
+            let detail = payload.get("detail").cloned().unwrap_or(Value::Null);
+            Ok(crate::manager::write_diagnostic_event(event, detail))
+        }
+        // ====== 暂时 stub 的端点 ======
+        "/manager/load-ccs-providers" => Ok(crate::manager::load_ccs_providers()),
+        "/manager/import-ccs-providers" => Ok(crate::manager::import_ccs_providers()),
+        "/manager/load-pending-provider-import" => Ok(crate::manager::load_pending_provider_import()),
+        "/manager/confirm-pending-provider-import" => Ok(crate::manager::confirm_pending_provider_import()),
+        "/manager/dismiss-pending-provider-import" => Ok(crate::manager::dismiss_pending_provider_import()),
+        "/manager/list-local-sessions" => Ok(crate::manager::list_local_sessions()),
+        "/manager/delete-local-session" => Ok(crate::manager::delete_local_session()),
+        "/manager/fetch-relay-profile-models" => Ok(crate::manager::fetch_relay_profile_models()),
+        "/manager/diagnose-relay-profile" => Ok(crate::manager::diagnose_relay_profile()),
+        "/manager/repair-plugin-marketplace" => Ok(crate::manager::repair_plugin_marketplace()),
+        "/manager/repair-remote-plugin-marketplace" => Ok(crate::manager::repair_remote_plugin_marketplace()),
+        "/manager/refresh-script-market" => Ok(crate::manager::refresh_script_market()),
+        "/manager/install-market-script" => {
+            let id = payload.get("id").and_then(Value::as_str).unwrap_or("");
+            Ok(crate::manager::install_market_script(id))
+        }
+        "/manager/set-user-script-enabled" => {
+            let key = payload.get("key").and_then(Value::as_str).unwrap_or("");
+            let enabled = payload.get("enabled").and_then(Value::as_bool).unwrap_or(true);
+            Ok(crate::manager::set_user_script_enabled(key, enabled))
+        }
+        "/manager/delete-user-script" => {
+            let key = payload.get("key").and_then(Value::as_str).unwrap_or("");
+            Ok(crate::manager::delete_user_script(key))
+        }
+        "/manager/load-provider-sync-targets" => Ok(crate::manager::load_provider_sync_targets()),
+        "/manager/sync-providers-now" => Ok(crate::manager::sync_providers_now()),
+        "/manager/list-zed-remote-projects" => Ok(crate::manager::list_zed_remote_projects()),
+        "/manager/open-zed-remote" => Ok(crate::manager::open_zed_remote()),
+        "/manager/forget-zed-remote-project" => {
+            let id = payload.get("id").and_then(Value::as_str).unwrap_or("");
+            Ok(crate::manager::forget_zed_remote_project(id))
+        }
         "/delete" => result_value(ctx.data.delete(session_from_payload(&payload)).await),
         "/undo" => {
             let undo_token = payload
@@ -644,7 +822,8 @@ async fn settings_value(
 ) -> anyhow::Result<Value> {
     let settings = result?;
     let codex_app_version = ctx.settings.codex_app_version().await.unwrap_or_default();
-    settings_payload_value(settings, codex_app_version)
+    let value = settings_payload_value(settings, codex_app_version)?;
+    Ok(wrap_ok_value(value, "设置已加载。"))
 }
 
 fn result_value<T>(result: anyhow::Result<T>) -> anyhow::Result<Value>
@@ -652,6 +831,25 @@ where
     T: serde::Serialize,
 {
     Ok(serde_json::to_value(result?)?)
+}
+
+/// 把 handler 返回的 `Value` 包装成 Tauri `CommandResult` 形状：
+/// `{"status": "ok", "message": "...", ...原有字段}`
+/// 如果 Value 不是 object，则包成 `{"status": "ok", "message": "...", "value": <Value>}`
+/// —— 这样前端 `r.status === "ok"` 判定能正常工作。
+fn wrap_ok_value(value: Value, message: &str) -> Value {
+    let mut obj = match value {
+        Value::Object(map) => map,
+        other => {
+            let mut map = serde_json::Map::new();
+            map.insert("value".to_string(), other);
+            map
+        }
+    };
+    obj.entry("status".to_string())
+        .or_insert(Value::String("ok".to_string()));
+    obj.insert("message".to_string(), Value::String(message.to_string()));
+    Value::Object(obj)
 }
 
 fn stepwise_settings_value(result: anyhow::Result<BackendSettings>) -> anyhow::Result<Value> {
@@ -781,4 +979,194 @@ fn empty_user_script_inventory() -> Value {
         "enabled": true,
         "scripts": []
     })
+}
+
+// ====== Manager bridge handlers（包装 manager.rs 的纯函数） ======
+
+fn manager_save_settings(payload: Value) -> anyhow::Result<Value> {
+    let settings: BackendSettings = serde_json::from_value(
+        payload.get("settings").cloned().unwrap_or(payload),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let result = crate::manager::save_settings(settings);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "设置已保存。"))
+}
+
+fn manager_save_relay_file(payload: Value) -> anyhow::Result<Value> {
+    let kind = payload
+        .get("file")
+        .or_else(|| payload.get("kind"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let contents = payload
+        .get("contents")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let result = crate::manager::save_relay_file(kind, contents);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "配置文件已保存。"))
+}
+
+fn manager_switch_relay_profile(payload: Value) -> anyhow::Result<Value> {
+    let request = payload
+        .get("request")
+        .cloned()
+        .unwrap_or_else(|| payload.clone());
+    let settings: BackendSettings = serde_json::from_value(
+        request.get("settings").cloned().unwrap_or(request.clone()),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let previous = request
+        .get("previousActiveRelayId")
+        .or_else(|| request.get("previous_active_relay_id"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let result = crate::manager::switch_relay_profile(settings, previous);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "供应商已切换。"))
+}
+
+fn manager_backfill_relay_profile(payload: Value) -> anyhow::Result<Value> {
+    let request = payload
+        .get("request")
+        .cloned()
+        .unwrap_or_else(|| payload.clone());
+    let settings: BackendSettings = serde_json::from_value(
+        request.get("settings").cloned().unwrap_or(request.clone()),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let profile_id = request
+        .get("profileId")
+        .or_else(|| request.get("profile_id"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let result = crate::manager::backfill_relay_profile_from_live(settings, profile_id);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "profile 已从 live 回填。"))
+}
+
+fn manager_list_context_entries(payload: Value) -> anyhow::Result<Value> {
+    let request = payload
+        .get("request")
+        .cloned()
+        .unwrap_or_else(|| payload.clone());
+    let settings: BackendSettings = serde_json::from_value(
+        request.get("settings").cloned().unwrap_or(request.clone()),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let result = crate::manager::list_context_entries(settings);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "context 条目已读取。"))
+}
+
+fn manager_upsert_context_entry(payload: Value) -> anyhow::Result<Value> {
+    let request = payload
+        .get("request")
+        .cloned()
+        .unwrap_or_else(|| payload.clone());
+    let settings: BackendSettings = serde_json::from_value(
+        request.get("settings").cloned().unwrap_or(request.clone()),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let kind = request
+        .get("kind")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let name = request
+        .get("id")
+        .or_else(|| request.get("name"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let body = request
+        .get("entry")
+        .or_else(|| request.get("tomlBody"))
+        .or_else(|| request.get("toml_body"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let result = crate::manager::upsert_context_entry(settings, kind, name, body);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "context 条目已写入。"))
+}
+
+fn manager_sync_live_context_entries(payload: Value) -> anyhow::Result<Value> {
+    let request = payload
+        .get("request")
+        .cloned()
+        .unwrap_or_else(|| payload.clone());
+    let settings: BackendSettings = serde_json::from_value(
+        request.get("settings").cloned().unwrap_or(request.clone()),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let result = crate::manager::sync_live_context_entries(settings);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "live context 已同步。"))
+}
+
+fn manager_delete_context_entry(payload: Value) -> anyhow::Result<Value> {
+    let request = payload
+        .get("request")
+        .cloned()
+        .unwrap_or_else(|| payload.clone());
+    let settings: BackendSettings = serde_json::from_value(
+        request.get("settings").cloned().unwrap_or(request.clone()),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let kind = request
+        .get("kind")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let name = request
+        .get("id")
+        .or_else(|| request.get("name"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let result = crate::manager::delete_context_entry(settings, kind, name);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "context 条目已删除。"))
+}
+
+fn manager_extract_relay_common_config(payload: Value) -> anyhow::Result<Value> {
+    let request = payload
+        .get("request")
+        .cloned()
+        .unwrap_or_else(|| payload.clone());
+    let settings: BackendSettings = serde_json::from_value(
+        request.get("settings").cloned().unwrap_or(request.clone()),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let profile_id = request
+        .get("profileId")
+        .or_else(|| request.get("profile_id"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let result = crate::manager::extract_relay_common_config(profile_id, settings);
+    Ok(wrap_ok_value(serde_json::to_value(result).unwrap_or(Value::Null), "common config 已提取。"))
+}
+
+async fn manager_test_relay_profile(payload: Value) -> anyhow::Result<Value> {
+    // 兼容：profile 字段可以是 RelayProfile 或 BackendSettings
+    let profile_value = payload.get("profile").cloned().unwrap_or(payload);
+    let relay_profile = serde_json::from_value::<crate::settings::RelayProfile>(profile_value)
+        .ok()
+        .or_else(|| {
+            serde_json::from_value::<BackendSettings>(serde_json::Value::Null)
+                .ok()
+                .and_then(|settings| {
+                    settings
+                        .relay_profiles
+                        .into_iter()
+                        .find(|p| p.id == settings.active_relay_id)
+                })
+        })
+        .unwrap_or_default();
+    let result = crate::manager::test_relay_profile(relay_profile).await;
+    Ok(wrap_ok_value(
+        serde_json::to_value(result).unwrap_or(Value::Null),
+        "profile 测试完成。",
+    ))
+}
+
+async fn manager_test_stepwise_settings(payload: Value) -> anyhow::Result<Value> {
+    let settings: BackendSettings = serde_json::from_value(
+        payload.get("settings").cloned().unwrap_or(payload),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 settings 失败：{error}"))?;
+    let result = crate::manager::test_stepwise_settings(settings).await;
+    Ok(wrap_ok_value(
+        serde_json::to_value(result).unwrap_or(Value::Null),
+        "stepwise 测试完成。",
+    ))
 }
