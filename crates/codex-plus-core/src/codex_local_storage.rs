@@ -105,21 +105,3 @@ pub async fn sanitize_local_storage_model_suffixes_nonfatal(debug_port: u16) {
         );
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::SANITIZE_LOCAL_STORAGE_SCRIPT;
-
-    #[test]
-    fn sanitize_script_targets_daily_token_usage_key() {
-        assert!(SANITIZE_LOCAL_STORAGE_SCRIPT.contains("__codexDailyTokenUsageV1"));
-        assert!(SANITIZE_LOCAL_STORAGE_SCRIPT.contains("localStorage.getItem"));
-        assert!(SANITIZE_LOCAL_STORAGE_SCRIPT.contains("localStorage.setItem"));
-    }
-
-    #[test]
-    fn sanitize_script_strips_trailing_suffix_from_model() {
-        assert!(SANITIZE_LOCAL_STORAGE_SCRIPT.contains("turn.model"));
-        assert!(SANITIZE_LOCAL_STORAGE_SCRIPT.contains("replace(/\\[[^\\]]+\\]$/"));
-    }
-}

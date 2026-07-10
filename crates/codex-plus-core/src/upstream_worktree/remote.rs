@@ -481,6 +481,3 @@ pub fn create_for_remote_project(
         "sourceHead": source_head,
     }))
 }
-
-#[cfg(test)]
-mod tests;

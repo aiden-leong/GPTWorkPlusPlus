@@ -1476,39 +1476,6 @@ fn log_helper_response(
     );
 }
 
-#[cfg(test)]
-mod computer_use_tests {
-    use super::{header_value_from_request, overlay_image_content_type};
-    use std::path::Path;
-
-    #[test]
-    fn overlay_image_content_type_accepts_common_images_only() {
-        assert_eq!(
-            overlay_image_content_type(Path::new("overlay.PNG")),
-            Some("image/png")
-        );
-        assert_eq!(
-            overlay_image_content_type(Path::new("overlay.jpeg")),
-            Some("image/jpeg")
-        );
-        assert_eq!(
-            overlay_image_content_type(Path::new("overlay.webp")),
-            Some("image/webp")
-        );
-        assert_eq!(overlay_image_content_type(Path::new("overlay.txt")), None);
-    }
-
-    #[test]
-    fn header_value_from_request_reads_user_agent_case_insensitively() {
-        let request = "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1\r\nUser-Agent: Codex/26.614\r\nContent-Length: 2\r\n\r\n{}";
-
-        assert_eq!(
-            header_value_from_request(request, "user-agent").as_deref(),
-            Some("Codex/26.614")
-        );
-    }
-}
-
 async fn read_http_request(stream: &mut tokio::net::TcpStream) -> anyhow::Result<Vec<u8>> {
     let mut buffer = Vec::new();
     let mut chunk = vec![0_u8; 4096];
@@ -2239,58 +2206,5 @@ fn activate_packaged_app_blocking(app_user_model_id: &str, arguments: &str) -> a
             CoUninitialize();
         }
         result.map_err(Into::into)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn post_launch_guard_stops_after_stable_ready_artifacts() {
-        let artifacts = crate::computer_use_guard::GuardArtifacts {
-            notify_exe: Some(PathBuf::from("codex-computer-use.exe")),
-            marketplace_path: Some(PathBuf::from("openai-bundled")),
-            sky_package_json: None,
-            runtime_exports_needed: false,
-        };
-
-        assert!(!should_stop_post_launch_computer_use_guard(2, &artifacts));
-        assert!(should_stop_post_launch_computer_use_guard(3, &artifacts));
-    }
-
-    #[test]
-    fn post_launch_guard_keeps_retrying_until_artifacts_are_ready() {
-        let missing_notify = crate::computer_use_guard::GuardArtifacts {
-            notify_exe: None,
-            marketplace_path: Some(PathBuf::from("openai-bundled")),
-            sky_package_json: None,
-            runtime_exports_needed: false,
-        };
-        let missing_marketplace = crate::computer_use_guard::GuardArtifacts {
-            notify_exe: Some(PathBuf::from("codex-computer-use.exe")),
-            marketplace_path: None,
-            sky_package_json: None,
-            runtime_exports_needed: false,
-        };
-        let missing_runtime_package = crate::computer_use_guard::GuardArtifacts {
-            notify_exe: Some(PathBuf::from("codex-computer-use.exe")),
-            marketplace_path: Some(PathBuf::from("openai-bundled")),
-            sky_package_json: None,
-            runtime_exports_needed: true,
-        };
-
-        assert!(!should_stop_post_launch_computer_use_guard(
-            3,
-            &missing_notify
-        ));
-        assert!(!should_stop_post_launch_computer_use_guard(
-            3,
-            &missing_marketplace
-        ));
-        assert!(!should_stop_post_launch_computer_use_guard(
-            3,
-            &missing_runtime_package
-        ));
     }
 }

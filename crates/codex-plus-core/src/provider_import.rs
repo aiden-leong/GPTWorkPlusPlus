@@ -372,8 +372,3 @@ fn default_wire_api() -> String {
 fn default_relay_mode() -> String {
     "pureApi".to_string()
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-}

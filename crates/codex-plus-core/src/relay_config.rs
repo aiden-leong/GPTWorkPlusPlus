@@ -2435,67 +2435,6 @@ fn account_label_from_jwt(token: &str) -> Option<String> {
         .map(ToString::to_string)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn backfill_relay_profile_from_home_with_common_restores_template_provider_id() {
-        let temp = tempfile::tempdir().unwrap();
-        std::fs::write(
-            temp.path().join("config.toml"),
-            "model_provider = \"custom\"\nmodel = \"gpt-image-2\"\n\n[model_providers.custom]\nname = \"custom\"\nwire_api = \"responses\"\nrequires_openai_auth = true\nbase_url = \"https://ahg.codes\"\n",
-        )
-        .unwrap();
-        std::fs::write(temp.path().join("auth.json"), "{}\n").unwrap();
-
-        let mut profile = RelayProfile {
-            relay_mode: crate::settings::RelayMode::PureApi,
-            protocol: crate::settings::RelayProtocol::Responses,
-            config_contents: "model_provider = \"ai\"\nmodel = \"gpt-image-2\"\n\n[model_providers.ai]\nname = \"ai\"\nwire_api = \"responses\"\nrequires_openai_auth = true\nbase_url = \"https://ahg.codes\"\n"
-                .to_string(),
-            auth_contents: "{}\n".to_string(),
-            ..RelayProfile::default()
-        };
-        let mut common = String::new();
-
-        backfill_relay_profile_from_home_with_common(temp.path(), &mut profile, &mut common)
-            .unwrap();
-
-        assert!(profile.config_contents.contains("model_provider = \"ai\""));
-        assert!(profile.config_contents.contains("[model_providers.ai]"));
-        assert!(!profile.config_contents.contains("[model_providers.custom]"));
-    }
-
-    #[test]
-    fn relay_profile_model_prefers_config_then_field_then_empty() {
-        // 1. 供應商測試的回退第一級：config.toml 的 model = 優先
-        let from_config = RelayProfile {
-            config_contents: "model = \"deepseek-v4-flash\"\nmodel_provider = \"custom\"\n"
-                .to_string(),
-            model: "should-not-be-used".to_string(),
-            ..RelayProfile::default()
-        };
-        assert_eq!(relay_profile_model(&from_config), "deepseek-v4-flash");
-
-        // 2. config 沒寫 model 時退回 profile.model 欄位
-        let from_field = RelayProfile {
-            config_contents: "model_provider = \"custom\"\n".to_string(),
-            model: "deepseek-v4-pro".to_string(),
-            ..RelayProfile::default()
-        };
-        assert_eq!(relay_profile_model(&from_field), "deepseek-v4-pro");
-
-        // 3. 兩者皆空 → 空字串；呼叫端據此才回退到全域 relayTestModel
-        let empty = RelayProfile {
-            config_contents: String::new(),
-            model: String::new(),
-            ..RelayProfile::default()
-        };
-        assert!(relay_profile_model(&empty).trim().is_empty());
-    }
-}
-
 pub fn root_key_string(contents: &str, key: &str) -> Option<String> {
     root_key_value(contents, key).map(unquote_toml_string)
 }

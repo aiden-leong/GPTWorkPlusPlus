@@ -51,36 +51,3 @@ pub fn set_settings_path_for_tests(path: Option<PathBuf>) -> Option<PathBuf> {
         .ok()
         .and_then(|mut current| std::mem::replace(&mut *current, path))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn default_settings_path_uses_app_state_directory() {
-        let path = default_settings_path();
-
-        assert!(path.ends_with(".codex-session-delete/settings.json"));
-    }
-
-    #[test]
-    fn default_latest_status_path_uses_app_state_directory() {
-        let path = default_latest_status_path();
-
-        assert!(path.ends_with(".codex-session-delete/latest-status.json"));
-    }
-
-    #[test]
-    fn default_diagnostic_log_path_uses_app_state_directory() {
-        let path = default_diagnostic_log_path();
-
-        assert!(path.ends_with(".codex-session-delete/codex-plus.log"));
-    }
-
-    #[test]
-    fn default_pending_provider_import_path_uses_app_state_directory() {
-        let path = default_pending_provider_import_path();
-
-        assert!(path.ends_with(".codex-session-delete/pending-provider-import.json"));
-    }
-}

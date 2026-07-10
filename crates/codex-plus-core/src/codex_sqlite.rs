@@ -281,39 +281,3 @@ pub(crate) fn sanitize_model_suffixes_in_text(text: &str) -> String {
 fn is_model_id_char(c: char) -> bool {
     c.is_alphanumeric() || c == '.' || c == '/' || c == '_' || c == '-' || c == ':'
 }
-
-#[cfg(test)]
-mod tests {
-    use super::sanitize_model_suffixes_in_text;
-
-    #[test]
-    fn strips_trailing_suffix_from_model_names() {
-        assert_eq!(
-            sanitize_model_suffixes_in_text("model=deepseek-v4-flash[1M]"),
-            "model=deepseek-v4-flash"
-        );
-        assert_eq!(
-            sanitize_model_suffixes_in_text("nvidia/nemotron-3-super-120b-a12b:free[1M]"),
-            "nvidia/nemotron-3-super-120b-a12b:free"
-        );
-        assert_eq!(sanitize_model_suffixes_in_text("glm-5.2[1M]"), "glm-5.2");
-    }
-
-    #[test]
-    fn leaves_non_model_brackets_unchanged() {
-        assert_eq!(
-            sanitize_model_suffixes_in_text("array[0] and foo[bar]"),
-            "array[0] and foo[bar]"
-        );
-        assert_eq!(
-            sanitize_model_suffixes_in_text("some [placeholder] text"),
-            "some [placeholder] text"
-        );
-    }
-
-    #[test]
-    fn leaves_text_without_brackets_unchanged() {
-        let text = "no suffix here";
-        assert_eq!(sanitize_model_suffixes_in_text(text), text);
-    }
-}

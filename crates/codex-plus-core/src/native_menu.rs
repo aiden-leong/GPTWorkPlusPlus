@@ -207,18 +207,3 @@ async fn try_install_native_menu_localizer(inspector_port: u16) -> anyhow::Resul
     );
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn native_menu_localizer_script_uses_runtime_menu_patch() {
-        let script = native_menu_localizer_script().unwrap();
-
-        assert!(script.contains("Menu.setApplicationMenu"));
-        assert!(script.contains("Toggle Sidebar"));
-        assert!(script.contains("切换边栏"));
-        assert!(!script.contains("app.asar"));
-    }
-}

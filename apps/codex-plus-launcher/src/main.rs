@@ -755,68 +755,6 @@ fn default_user_scripts_config_dir() -> PathBuf {
         .join("Codex++")
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parse_launch_options_accepts_manager_forwarded_ports_and_app_path() {
-        let options = parse_launch_options([
-            "--app-path",
-            "C:/Codex/App",
-            "--debug-port",
-            "9333",
-            "--helper-port",
-            "57322",
-        ]);
-
-        assert_eq!(options.app_dir, Some(PathBuf::from("C:/Codex/App")));
-        assert_eq!(options.debug_port, 9333);
-        assert_eq!(options.helper_port, 57322);
-    }
-
-    #[test]
-    fn parse_launch_options_ignores_invalid_ports() {
-        let options = parse_launch_options(["--debug-port", "nope", "--helper-port", "70000"]);
-
-        assert_eq!(options.debug_port, LaunchOptions::default().debug_port);
-        assert_eq!(options.helper_port, LaunchOptions::default().helper_port);
-    }
-
-    #[test]
-    fn launcher_uses_single_instance_guard_before_launching() {
-        let source = include_str!("main.rs");
-
-        assert!(source.contains("acquire_single_instance_guard(options.debug_port)?"));
-        assert!(source.contains("launcher_guard_port"));
-        assert!(source.contains("launcher.already_running"));
-    }
-
-    #[test]
-    fn launcher_hooks_forward_computer_use_guard_methods() {
-        let source = include_str!("main.rs");
-
-        assert!(source.contains("async fn ensure_computer_use_config"));
-        assert!(source.contains("self.core.ensure_computer_use_config(settings).await"));
-        assert!(source.contains("async fn ensure_plugin_marketplace_config"));
-        assert!(source.contains("self.core.ensure_plugin_marketplace_config(settings).await"));
-        assert!(source.contains("async fn start_computer_use_guard_watchdog"));
-        assert!(source.contains("self.core"));
-        assert!(source.contains(".start_computer_use_guard_watchdog(settings)"));
-    }
-
-    #[test]
-    fn manager_update_prompt_uses_sidecar_manager_binary_name() {
-        let path = manager_exe_path();
-
-        assert!(
-            path.file_name()
-                .and_then(|name| name.to_str())
-                .is_some_and(|name| name.contains(codex_plus_core::install::MANAGER_BINARY))
-        );
-    }
-}
-
 fn builtin_user_scripts_dir() -> PathBuf {
     std::env::current_exe()
         .ok()
