@@ -35,7 +35,7 @@ import type { CodexContextEntries, CodexContextEntry, BackendSettings } from "@/
 import { isSuccessStatus } from "@/lib/utils";
 import { globalConfirm } from "@/components/ConfirmManager";
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 type Props = {
   // 组件独立维护自己的 state
@@ -55,7 +55,7 @@ export const RelayContextManager = ({}: Props) => {
   const [editing, setEditing] = useState<{ kind: string; entry: CodexContextEntry | null; isNew: boolean } | null>(null);
 
   // 加载
-  const refresh = async (silent = true) => {
+  const refresh = async () => {
     if (!settings?.settings) return;
     const r = await tauri.listContextEntries({ settings: settings.settings });
     if (r && isSuccessStatus(r.status)) {
@@ -185,7 +185,7 @@ export const RelayContextManager = ({}: Props) => {
     <Card
       title="工具与插件（MCP / Skills / Plugins）"
       extra={
-        <Button icon={<ReloadOutlined />} onClick={() => refresh(false)}>
+        <Button icon={<ReloadOutlined />} onClick={() => refresh()}>
           刷新
         </Button>
       }

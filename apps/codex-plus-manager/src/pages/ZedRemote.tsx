@@ -32,7 +32,7 @@ import { useSettingsStore, useZedRemoteStore } from "@/lib/store";
 import type { BackendSettings, ZedOpenStrategy, ZedRemoteProject } from "@/lib/types";
 import { formatTime, isSuccessStatus, stringifyError } from "@/lib/utils";
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 const STRATEGY_OPTIONS: { value: ZedOpenStrategy; label: string; hint: string }[] = [
   {

@@ -12,7 +12,6 @@ import {
   ExperimentOutlined,
 } from "@ant-design/icons";
 import type { RelayProfile } from "@/lib/types";
-import { useSettingsStore } from "@/lib/store";
 
 const { Text, Paragraph } = Typography;
 

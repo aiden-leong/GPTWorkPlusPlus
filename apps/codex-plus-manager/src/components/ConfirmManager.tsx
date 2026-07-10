@@ -2,7 +2,7 @@
 // 用于替代原 App.tsx 中的 confirmDialog state
 
 import { useState, useEffect } from "react";
-import { App as AntdApp, Modal } from "antd";
+import { App as AntdApp } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 
 type PendingConfirm = {

@@ -8,7 +8,6 @@ import {
   Input,
   Select,
   Switch,
-  InputNumber,
   Button,
   Space,
   Tabs,
@@ -21,7 +20,6 @@ import {
   message,
   Spin,
   AutoComplete,
-  Tooltip,
 } from "antd";
 import {
   ApiOutlined,
@@ -29,11 +27,9 @@ import {
   CodeOutlined,
   ExperimentOutlined,
   FunctionOutlined,
-  PlusOutlined,
-  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { tauri } from "@/lib/tauri";
-import { useSettingsStore, useRelayStore, useUIStore } from "@/lib/store";
+import { useSettingsStore, useUIStore } from "@/lib/store";
 import type { RelayProfile, BackendSettings, RelayMode, RelayProtocol } from "@/lib/types";
 import { isSuccessStatus } from "@/lib/utils";
 import { PRESETS, type ProviderPreset } from "@/lib/presets";
@@ -105,9 +101,6 @@ export const RelayProfileEditor = ({ open, profile, isNew, onClose, onSaved }: P
   const [fetchingModels, setFetchingModels] = useState(false);
   const [doctorResult, setDoctorResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
-
-  const formProfile = Form.useWatch([], { form, preserve: true });
-  const relayMode: RelayMode = formProfile?.relayMode ?? "pureApi";
 
   // 初始化表单
   useEffect(() => {

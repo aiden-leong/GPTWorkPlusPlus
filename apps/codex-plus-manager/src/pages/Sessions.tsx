@@ -113,7 +113,6 @@ export const Sessions = () => {
     try {
       // 顺序删除，串行避免 SQLite 锁
       let success = 0;
-      let lastResult: any = null;
       for (const id of selected) {
         const s = sessions.find((x) => x.id === id);
         if (!s) continue;
@@ -121,7 +120,6 @@ export const Sessions = () => {
           sessionId: id,
           dbPath: s.dbPath || localSessions?.dbPath || null,
         });
-        lastResult = r;
         if (r && isSuccessStatus(r.status)) {
           success += 1;
           if (r.undo_token && r.backup_path) {

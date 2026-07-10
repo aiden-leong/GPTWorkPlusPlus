@@ -30,17 +30,16 @@ import { tauri } from "@/lib/tauri";
 import {
   useSettingsStore,
   useRelayStore,
-  useUIStore,
 } from "@/lib/store";
 import type { RelayProfile, BackendSettings } from "@/lib/types";
-import { isSuccessStatus, stringifyError } from "@/lib/utils";
+import { isSuccessStatus } from "@/lib/utils";
 import { RelayProfileEditor } from "@/components/RelayProfileEditor";
 import { RelayProfileList } from "@/components/RelayProfileList";
 import { RelayContextManager } from "@/components/RelayContextManager";
 import { RelayFileEditors } from "@/components/RelayFileEditors";
 import { globalConfirm } from "@/components/ConfirmManager";
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 const createEmptyProfile = (): RelayProfile => ({
   id: "profile-" + Math.random().toString(36).slice(2, 10),
@@ -76,7 +75,6 @@ export const Relay = () => {
   const setEnvConflicts = useRelayStore((s) => s.setEnvConflicts);
   const ccsProviders = useRelayStore((s) => s.ccsProviders);
   const setCcsProviders = useRelayStore((s) => s.setCcsProviders);
-  const setNotice = useUIStore((s) => s.setNotice);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<RelayProfile | null>(null);
