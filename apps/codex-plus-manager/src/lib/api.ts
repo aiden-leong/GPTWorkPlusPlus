@@ -119,57 +119,57 @@ export const api = {
   // ============== Overview ==============
 
   async loadOverview(): Promise<OverviewResult> {
-    return call<OverviewResult>("/overview");
+    return call<OverviewResult>("/manager/load-overview");
   },
 
   async launchCodexPlus(request: { args: string; mode: string }): Promise<CommandResult<unknown>> {
-    return call<CommandResult<unknown>>("/launch", { request });
+    return call<CommandResult<unknown>>("/manager/launch-codex-plus", { request });
   },
 
   async restartCodexPlus(request: { args: string; mode: string }): Promise<CommandResult<unknown>> {
-    return call<CommandResult<unknown>>("/restart", { request });
+    return call<CommandResult<unknown>>("/manager/restart-codex-plus", { request });
   },
 
   // ============== Settings ==============
 
   async loadSettings(): Promise<SettingsResult> {
-    return call<SettingsResult>("/settings/get");
+    return call<SettingsResult>("/manager/load-settings");
   },
 
   async saveSettings(settings: BackendSettings): Promise<SettingsResult> {
-    return call<SettingsResult>("/settings/set", { settings });
+    return call<SettingsResult>("/manager/save-settings", { settings });
   },
 
   async resetSettings(): Promise<SettingsResult> {
-    return call<SettingsResult>("/settings/reset");
+    return call<SettingsResult>("/manager/reset-settings");
   },
 
   async resetImageOverlaySettings(): Promise<SettingsResult> {
-    return call<SettingsResult>("/settings/reset-image-overlay");
+    return call<SettingsResult>("/manager/reset-image-overlay-settings");
   },
 
   // ============== CCS Provider Import ==============
 
   async loadCcsProviders(): Promise<CcsProvidersResult> {
-    return call<CcsProvidersResult>("/ccs-providers/list");
+    return call<CcsProvidersResult>("/manager/load-ccs-providers");
   },
 
   async importCcsProviders(): Promise<CommandResult<{ imported: number; skipped: number }>> {
-    return call("/ccs-providers/import");
+    return call("/manager/import-ccs-providers");
   },
 
   async loadPendingProviderImport(): Promise<PendingProviderImportResult> {
-    return call<PendingProviderImportResult>("/ccs-providers/pending");
+    return call<PendingProviderImportResult>("/manager/load-pending-provider-import");
   },
 
   async confirmPendingProviderImport(
     request: ProviderImportRequest,
   ): Promise<CommandResult<unknown>> {
-    return call("/ccs-providers/confirm", { request });
+    return call("/manager/confirm-pending-provider-import", { request });
   },
 
   async dismissPendingProviderImport(): Promise<CommandResult<unknown>> {
-    return call("/ccs-providers/dismiss");
+    return call("/manager/dismiss-pending-provider-import");
   },
 
   // ============== Local Sessions ==============
@@ -224,112 +224,112 @@ export const api = {
   // ============== Script Market ==============
 
   async refreshScriptMarket(): Promise<ScriptMarketResult> {
-    return call<ScriptMarketResult>("/user-scripts/refresh-market");
+    return call<ScriptMarketResult>("/manager/refresh-script-market");
   },
 
   async installMarketScript(id: string): Promise<ScriptMarketResult> {
-    return call<ScriptMarketResult>("/user-scripts/install-market", { id });
+    return call<ScriptMarketResult>("/manager/install-market-script", { id });
   },
 
   async setUserScriptEnabled(key: string, enabled: boolean): Promise<CommandResult<unknown>> {
-    return call("/user-scripts/set-script-enabled", { key, enabled });
+    return call("/manager/set-user-script-enabled", { key, enabled });
   },
 
   async deleteUserScript(key: string): Promise<CommandResult<unknown>> {
-    return call("/user-scripts/delete", { key });
+    return call("/manager/delete-user-script", { key });
   },
 
   // ============== External ==============
 
   async openExternalUrl(url: string): Promise<CommandResult<unknown>> {
-    return call("/open-external-url", { url });
+    return call("/manager/open-external-url", { url });
   },
 
   // ============== Install / Uninstall ==============
 
   async installEntrypoints(): Promise<InstallResult> {
-    return call<InstallResult>("/install/entrypoints");
+    return call<InstallResult>("/manager/install-entrypoints");
   },
 
   async uninstallEntrypoints(options: {
     silentShortcut: boolean;
     managementShortcut: boolean;
   }): Promise<InstallResult> {
-    return call<InstallResult>("/install/uninstall-entrypoints", { options });
+    return call<InstallResult>("/manager/uninstall-entrypoints", { options });
   },
 
   async repairShortcuts(): Promise<InstallResult> {
-    return call<InstallResult>("/install/repair-shortcuts");
+    return call<InstallResult>("/manager/repair-shortcuts");
   },
 
   // ============== Plugin Marketplace ==============
 
   async pluginMarketplaceStatus(): Promise<PluginMarketplaceStatusResult> {
-    return call<PluginMarketplaceStatusResult>("/plugin-marketplace/status");
+    return call<PluginMarketplaceStatusResult>("/manager/plugin-marketplace-status");
   },
 
   async repairPluginMarketplace(): Promise<PluginMarketplaceRepairResult> {
-    return call<PluginMarketplaceRepairResult>("/plugin-marketplace/repair");
+    return call<PluginMarketplaceRepairResult>("/manager/repair-plugin-marketplace");
   },
 
   async remotePluginMarketplaceStatus(): Promise<RemotePluginMarketplaceResult> {
-    return call<RemotePluginMarketplaceResult>("/plugin-marketplace/remote-status");
+    return call<RemotePluginMarketplaceResult>("/manager/remote-plugin-marketplace-status");
   },
 
   async repairRemotePluginMarketplace(): Promise<RemotePluginMarketplaceResult> {
-    return call<RemotePluginMarketplaceResult>("/plugin-marketplace/repair-remote");
+    return call<RemotePluginMarketplaceResult>("/manager/repair-remote-plugin-marketplace");
   },
 
   // ============== Watcher ==============
 
   async loadWatcherState(): Promise<WatcherResult> {
-    return call<WatcherResult>("/watcher/state");
+    return call<WatcherResult>("/manager/load-watcher-state");
   },
 
   async installWatcher(): Promise<WatcherResult> {
-    return call<WatcherResult>("/watcher/install");
+    return call<WatcherResult>("/manager/install-watcher");
   },
 
   async uninstallWatcher(): Promise<WatcherResult> {
-    return call<WatcherResult>("/watcher/uninstall");
+    return call<WatcherResult>("/manager/uninstall-watcher");
   },
 
   async enableWatcher(): Promise<WatcherResult> {
-    return call<WatcherResult>("/watcher/enable");
+    return call<WatcherResult>("/manager/enable-watcher");
   },
 
   async disableWatcher(): Promise<WatcherResult> {
-    return call<WatcherResult>("/watcher/disable");
+    return call<WatcherResult>("/manager/disable-watcher");
   },
 
   // ============== Logs / Diagnostics ==============
 
   async readLatestLogs(request: { lines: number }): Promise<LogsResult> {
-    return call<LogsResult>("/logs/latest", { request });
+    return call<LogsResult>("/manager/read-latest-logs", { request });
   },
 
   async copyDiagnostics(): Promise<DiagnosticsResult> {
-    return call<DiagnosticsResult>("/diagnostics/copy");
+    return call<DiagnosticsResult>("/manager/copy-diagnostics");
   },
 
   // ============== Relay Status / Files ==============
 
   async relayStatus(): Promise<RelayResult> {
-    return call<RelayResult>("/relay/status");
+    return call<RelayResult>("/manager/relay-status");
   },
 
   async readRelayFiles(): Promise<RelayFilesResult> {
-    return call<RelayFilesResult>("/relay/files");
+    return call<RelayFilesResult>("/manager/read-relay-files");
   },
 
   // ============== Env Conflicts ==============
 
   async checkEnvConflicts(): Promise<EnvConflictsResult> {
-    return call<EnvConflictsResult>("/relay/env-conflicts");
+    return call<EnvConflictsResult>("/manager/check-env-conflicts");
   },
 
   async removeEnvConflicts(request: { names: string[] }): Promise<RemoveEnvConflictsResult> {
-    return call<RemoveEnvConflictsResult>("/relay/remove-env-conflicts", { request });
+    return call<RemoveEnvConflictsResult>("/manager/remove-env-conflicts", { request });
   },
 
   // ============== Relay File Edit ==============
@@ -338,29 +338,29 @@ export const api = {
     file: "config" | "auth";
     contents: string;
   }): Promise<CommandResult<unknown>> {
-    return call("/relay/save-file", { request });
+    return call("/manager/save-relay-file", { request });
   },
 
   // ============== Relay Switch ==============
 
   async switchRelayProfile(request: { profileId: string }): Promise<RelaySwitchResult> {
-    return call<RelaySwitchResult>("/relay/switch-profile", { request });
+    return call<RelaySwitchResult>("/manager/switch-relay-profile", { request });
   },
 
   async backfillRelayProfileFromLive(request: {
     profileId: string;
   }): Promise<SettingsBackfillResult> {
-    return call<SettingsBackfillResult>("/relay/backfill-profile", { request });
+    return call<SettingsBackfillResult>("/manager/backfill-relay-profile-from-live", { request });
   },
 
   // ============== Context Entries ==============
 
   async listContextEntries(request: { settings: BackendSettings }): Promise<ContextEntriesResult> {
-    return call<ContextEntriesResult>("/relay/context-entries", { request });
+    return call<ContextEntriesResult>("/manager/list-context-entries", { request });
   },
 
   async readLiveContextEntries(): Promise<LiveContextEntriesResult> {
-    return call<LiveContextEntriesResult>("/relay/live-context-entries");
+    return call<LiveContextEntriesResult>("/manager/read-live-context-entries");
   },
 
   async upsertContextEntry(request: {
@@ -368,20 +368,20 @@ export const api = {
     name: string;
     entry: unknown;
   }): Promise<CommandResult<unknown>> {
-    return call("/relay/upsert-context-entry", { request });
+    return call("/manager/upsert-context-entry", { request });
   },
 
   async syncLiveContextEntries(request: {
     settings: BackendSettings;
   }): Promise<LiveContextEntriesResult> {
-    return call<LiveContextEntriesResult>("/relay/sync-live-context-entries", { request });
+    return call<LiveContextEntriesResult>("/manager/sync-live-context-entries", { request });
   },
 
   async deleteContextEntry(request: {
     kind: string;
     name: string;
   }): Promise<CommandResult<unknown>> {
-    return call("/relay/delete-context-entry", { request });
+    return call("/manager/delete-context-entry", { request });
   },
 
   // ============== Relay Common Config ==============
@@ -389,39 +389,39 @@ export const api = {
   async extractRelayCommonConfig(request: {
     profileId: string;
   }): Promise<ExtractRelayCommonConfigResult> {
-    return call<ExtractRelayCommonConfigResult>("/relay/extract-common-config", { request });
+    return call<ExtractRelayCommonConfigResult>("/manager/extract-relay-common-config", { request });
   },
 
   // ============== Profile Test / Models ==============
 
   async testRelayProfile(profile: RelayProfile): Promise<RelayProfileTestResult> {
-    return call<RelayProfileTestResult>("/relay/test-profile", { profile });
+    return call<RelayProfileTestResult>("/manager/test-relay-profile", { profile });
   },
 
   async testStepwiseSettings(settings: BackendSettings): Promise<StepwiseTestResult> {
-    return call<StepwiseTestResult>("/stepwise/test", { settings });
+    return call<StepwiseTestResult>("/manager/test-stepwise-settings", { settings });
   },
 
   async fetchRelayProfileModels(profile: RelayProfile): Promise<RelayProfileModelsResult> {
-    return call<RelayProfileModelsResult>("/relay/profile-models", { profile });
+    return call<RelayProfileModelsResult>("/manager/fetch-relay-profile-models", { profile });
   },
 
   async diagnoseRelayProfile(profile: RelayProfile): Promise<ProviderDoctorResult> {
-    return call<ProviderDoctorResult>("/relay/diagnose-profile", { profile });
+    return call<ProviderDoctorResult>("/manager/diagnose-relay-profile", { profile });
   },
 
   // ============== Injection ==============
 
   async applyRelayInjection(): Promise<CommandResult<unknown>> {
-    return call("/injection/apply-relay");
+    return call("/manager/apply-relay-injection");
   },
 
   async applyPureApiInjection(): Promise<CommandResult<unknown>> {
-    return call("/injection/apply-pure-api");
+    return call("/manager/apply-pure-api-injection");
   },
 
   async clearRelayInjection(): Promise<CommandResult<unknown>> {
-    return call("/injection/clear-relay");
+    return call("/manager/clear-relay-injection");
   },
 
   // ============== Tray ==============
@@ -454,7 +454,7 @@ export const api = {
     event: string,
     detail: unknown,
   ): Promise<CommandResult<unknown>> {
-    return call("/diagnostics/log", { event, detail });
+    return call("/manager/write-diagnostic-event", { event, detail });
   },
 };
 

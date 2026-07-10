@@ -64,6 +64,7 @@ export const Enhance = () => {
   const [draft, setDraft] = useState<BackendSettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   // 同步 settings → draft
   useEffect(() => {
@@ -141,7 +142,6 @@ export const Enhance = () => {
   };
 
   // Stepwise 测试
-  const [testing, setTesting] = useState(false);
   const handleTestStepwise = async () => {
     if (!draft) return;
     setTesting(true);
@@ -330,7 +330,7 @@ export const Enhance = () => {
             <Col span={6}>
               <Space>
                 <Switch
-                  checked={draft.imageOverlay.enabled}
+                  checked={draft.imageOverlay?.enabled ?? false}
                   onChange={(v) => updateOverlay("enabled", v)}
                 />
                 <Text strong>启用</Text>
@@ -338,20 +338,20 @@ export const Enhance = () => {
             </Col>
             <Col span={6}>
               <Text type="secondary">显示方式</Text>
-              <Select
-                value={draft.imageOverlay.fit}
-                onChange={(v) => updateOverlay("fit", v)}
+                <Select
+                  value={draft.imageOverlay?.fit ?? "fit"}
+                  onChange={(v) => updateOverlay("fit", v)}
                 options={FIT_OPTIONS}
                 style={{ width: "100%", marginTop: 4 }}
               />
             </Col>
             <Col span={12}>
-              <Text type="secondary">不透明度：{Math.round(draft.imageOverlay.opacity * 100)}%</Text>
+                <Text type="secondary">不透明度：{Math.round((draft.imageOverlay?.opacity ?? 1) * 100)}%</Text>
               <Slider
                 min={0}
                 max={1}
                 step={0.05}
-                value={draft.imageOverlay.opacity}
+                value={draft.imageOverlay?.opacity ?? 1}
                 onChange={(v) => updateOverlay("opacity", v)}
               />
             </Col>
