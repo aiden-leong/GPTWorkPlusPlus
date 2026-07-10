@@ -127,25 +127,6 @@ export type InstallResult = CommandResult<{
 
 // ============== Settings / Backend Settings ==============
 
-export type CodexContextEntry = {
-  enabled: boolean;
-  name?: string;
-  path?: string;
-  // MCP 字段
-  url?: string;
-  bearerTokenEnvVar?: string;
-  // Skill 字段
-  skillPath?: string;
-  // Plugin 字段
-  marketplacePath?: string;
-};
-
-export type CodexContextEntries = {
-  mcp_servers: Record<string, CodexContextEntry>;
-  skills: Record<string, CodexContextEntry>;
-  plugins: Record<string, CodexContextEntry>;
-};
-
 export type RelayMode = "official" | "mixedApi" | "pureApi" | "aggregate";
 export type RelayProtocol = "responses" | "chatCompletions";
 export type ImageOverlayFitMode = "fill" | "fit" | "stretch" | "tile" | "center";
@@ -166,26 +147,48 @@ export type RelayAggregateConfig = {
   members: RelayAggregateMember[];
 };
 
+export type AggregateRelayStrategy =
+  | "failover"
+  | "conversationRoundRobin"
+  | "requestRoundRobin"
+  | "weightedRoundRobin";
+
 export type AggregateRelayMember = {
-  name: string;
-  baseUrl: string;
-  protocol: RelayProtocol;
-  model: string;
+  relayId: string;
   weight: number;
 };
 
 export type AggregateRelayProfile = {
-  strategy: "failover" | "roundRobin" | "weightedRoundRobin";
+  id: string;
+  name: string;
+  strategy: AggregateRelayStrategy;
   members: AggregateRelayMember[];
 };
 
+export type ContextKind = "mcp" | "skill" | "plugin";
+
+export type CodexContextEntry = {
+  id: string;
+  kind: string;
+  title: string;
+  summary: string;
+  tomlBody: string;
+  enabled: boolean;
+};
+
+export type CodexContextEntries = {
+  mcpServers: CodexContextEntry[];
+  skills: CodexContextEntry[];
+  plugins: CodexContextEntry[];
+};
+
 export type RelayContextSelection = {
-  mcp_servers: string[];
+  mcpServers: string[];
   skills: string[];
   plugins: string[];
 };
 
-export type ContextKind = "mcp" | "skill" | "plugin";
+export type RelayModelInsertMode = "overwrite" | "append" | string;
 
 export type RelayProfile = {
   id: string;
@@ -201,25 +204,31 @@ export type RelayProfile = {
   configContents: string;
   authContents: string;
   useCommonConfig: boolean;
+  contextSelection: RelayContextSelection;
+  contextSelectionInitialized: boolean;
   contextWindow: string;
+  autoCompactLimit: string;
+  modelInsertMode: RelayModelInsertMode;
+  modelList: string;
   modelWindows: string;
-  imageOverlay: {
-    enabled: boolean;
-    fit: ImageOverlayFitMode;
-    opacity: number;
-  };
+  userAgent: string;
+  // 增强
   step?: {
     enabled: boolean;
     baseUrl: string;
     apiKey: string;
     model: string;
   };
-  contextSelection: RelayContextSelection;
-  aggregate?: AggregateRelayProfile;
-  // 增强
-  isAggregate: boolean;
+  imageOverlay?: {
+    enabled: boolean;
+    fit: ImageOverlayFitMode;
+    opacity: number;
+  };
+  // 聚合（不直接序列化，仅内存中使用）
+  isAggregate?: boolean;
+  aggregate?: AggregateRelayProfile | null;
   // 状态
-  enabled: boolean;
+  enabled?: boolean;
 };
 
 export type BackendSettings = {
