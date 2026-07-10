@@ -2,9 +2,9 @@
 
 ## Goal
 
-Add a user-selectable sync target to the Codex++ session sync page, and align Codex++ provider discovery and sync behavior with `Dailin521/codex-provider-sync`.
+Add a user-selectable sync target to the GPT Work++ session sync page, and align GPT Work++ provider discovery and sync behavior with `Dailin521/codex-provider-sync`.
 
-The feature lets users choose which Provider ID historical sessions should be synchronized to, while keeping the current Codex `config.toml` provider unchanged unless a future separate switch feature is added.
+The feature lets users choose which Provider ID historical sessions should be synchronized to, while keeping the current GPT Work `config.toml` provider unchanged unless a future separate switch feature is added.
 
 ## Reference behavior
 
@@ -74,7 +74,7 @@ Add three focused backend capabilities:
 
 1. Provider target discovery, matching the reference project's source merge rules.
 2. Explicit-target provider sync, matching `codex-provider sync --provider <id>` semantics.
-3. More complete sync repair logic for global workspace state, matching the reference project where Codex++ currently differs.
+3. More complete sync repair logic for global workspace state, matching the reference project where GPT Work++ currently differs.
 
 The Tauri manager exposes two commands:
 
@@ -129,7 +129,7 @@ It builds a map from provider ID to sources, mirroring the reference project:
 2. Add the current root `model_provider` with source `Config`.
 3. Add rollout provider IDs from `sessions/**/rollout-*.jsonl` and `archived_sessions/**/rollout-*.jsonl` with source `Rollout`.
 4. Add SQLite provider IDs from `state_5.sqlite` `threads.model_provider`, split by archived/non-archived only for counting; source is still `Sqlite`.
-5. Add saved/manual providers from Codex++ settings with source `Manual` once those settings fields exist.
+5. Add saved/manual providers from GPT Work++ settings with source `Manual` once those settings fields exist.
 6. Add the default provider `openai` through the config-provider parser behavior, matching the reference `listConfiguredProviderIds()` default inclusion.
 
 Provider IDs that are missing, empty, or whitespace-only are ignored. Missing `model_provider` falls back to `openai`.
@@ -197,7 +197,7 @@ When the current `payload.model_provider` differs from the target provider, rewr
 
 If a rollout contains `encrypted_content`, count it by its original provider and return the existing warning behavior. Sync must not decrypt, re-encrypt, or rewrite encrypted conversation payloads.
 
-Continue to preserve file modification time after rewriting, matching current Codex++ behavior and the reference project.
+Continue to preserve file modification time after rewriting, matching current GPT Work++ behavior and the reference project.
 
 ## SQLite sync behavior
 
@@ -233,7 +233,7 @@ Malformed or busy SQLite errors should return a skipped/failed sync result with 
 
 ## Global state sync behavior
 
-Align Codex++ global state repair with the reference `GlobalStateService.SyncWorkspaceRootsAsync()`.
+Align GPT Work++ global state repair with the reference `GlobalStateService.SyncWorkspaceRootsAsync()`.
 
 Read `.codex-global-state.json` if present. If absent, return zero global state updates.
 
@@ -249,7 +249,7 @@ electron-workspace-root-labels
 open-in-target-preferences.perPath
 ```
 
-Codex++ currently handles the first four groups partially; this design adds `open-in-target-preferences.perPath` and uses SQLite cwd stats to resolve stored paths in the same spirit as the reference project.
+GPT Work++ currently handles the first four groups partially; this design adds `open-in-target-preferences.perPath` and uses SQLite cwd stats to resolve stored paths in the same spirit as the reference project.
 
 When global state changes, write both:
 
@@ -281,7 +281,7 @@ metadata.json
 
 `session-meta-backup.json` records original first-line metadata for rollout files that will be changed, including path, original first line, separator, and original last-write timestamp when available.
 
-Expand `metadata.json` to include structured fields while preserving Codex++'s existing `managedBy` marker for pruning:
+Expand `metadata.json` to include structured fields while preserving GPT Work++'s existing `managedBy` marker for pruning:
 
 ```json
 {
@@ -292,7 +292,7 @@ Expand `metadata.json` to include structured fields while preserving Codex++'s e
   "createdAt": "...",
   "dbFiles": ["state_5.sqlite"],
   "changedSessionFiles": 3,
-  "managedBy": "Codex++ provider sync"
+  "managedBy": "GPT Work++ provider sync"
 }
 ```
 
@@ -300,7 +300,7 @@ After successful sync, keep pruning managed backups to the newest 5.
 
 ## Failure recovery
 
-Improve Codex++ recovery semantics to match the reference project more closely.
+Improve GPT Work++ recovery semantics to match the reference project more closely.
 
 Before writes, create a backup. Then:
 
@@ -417,7 +417,7 @@ Automated tests should cover:
 
 Manual verification should cover:
 
-1. Open Codex++ manager.
+1. Open GPT Work++ manager.
 2. Confirm the sync target dropdown lists providers from config, rollout files, and SQLite.
 3. Pick a non-current provider.
 4. Run sync.

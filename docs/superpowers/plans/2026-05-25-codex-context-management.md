@@ -1,8 +1,8 @@
-# Codex 上下文管理 Implementation Plan
+# GPT Work 上下文管理 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 按任务执行。每一步使用 checkbox（`- [ ]`）跟踪。
 
-**Goal:** 为 Codex++ 供应商配置添加 Codex-only 的 MCP、skills、plugins 上下文管理，并支持供应商级上下文勾选、上下文大小和压缩上下文大小。
+**Goal:** 为 GPT Work++ 供应商配置添加 GPT Work-only 的 MCP、skills、plugins 上下文管理，并支持供应商级上下文勾选、上下文大小和压缩上下文大小。
 
 **Architecture:** 核心层负责 TOML 结构化解析、过滤、合并和校验；Tauri 命令层负责把核心能力暴露给前端并维持 settings 保存流程；前端在供应商配置页展示公共上下文库和每个供应商的选择。切换供应商时只把当前供应商勾选的公共上下文项合并进 live `~/.codex/config.toml`。
 
@@ -15,7 +15,7 @@
 - 修改 `crates/codex-plus-core/src/settings.rs`
   - 为 `RelayProfile` 增加 `context_selection`、`context_window`、`auto_compact_limit`，全部带默认值。
 - 修改 `crates/codex-plus-core/src/relay_config.rs`
-  - 增加 Codex 上下文 TOML 解析、upsert、delete、filter、上下文 token 字段写入。
+  - 增加 GPT Work 上下文 TOML 解析、upsert、delete、filter、上下文 token 字段写入。
   - 增加带上下文选择的完整文件切换函数。
 - 修改 `crates/codex-plus-core/tests/relay_config.rs`
   - 覆盖公共上下文解析、增删改、过滤、切换写入和数字校验。
@@ -1481,6 +1481,6 @@ Expected: 提交成功，且不包含 `node_modules`、`target-tauri-build` 或�
 
 ## 自查
 
-- Spec 覆盖：公共上下文库、供应商勾选、切换过滤、上下文 token 字段、Codex-only 范围、测试要求均有对应任务。
+- Spec 覆盖：公共上下文库、供应商勾选、切换过滤、上下文 token 字段、GPT Work-only 范围、测试要求均有对应任务。
 - 类型一致性：Rust 使用 `RelayContextSelection { mcp_servers, skills, plugins }`；前端使用 `RelayContextSelection { mcpServers, skills, plugins }`；serde camelCase 对齐。
-- 无未决项：跨应用、远程安装、Codex 运行时是否完全执行 token 字段均明确不在范围内。
+- 无未决项：跨应用、远程安装、GPT Work 运行时是否完全执行 token 字段均明确不在范围内。

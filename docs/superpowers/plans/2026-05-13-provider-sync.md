@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an optional default-off Codex++ provider sync that runs before Codex launches and keeps historical conversations visible after `model_provider` changes.
+**Goal:** Add an optional default-off GPT Work++ provider sync that runs before GPT Work launches and keeps historical conversations visible after `model_provider` changes.
 
 **Architecture:** Add backend settings in `~/.codex-session-delete/settings.json`, expose those settings through the existing CDP bridge/menu, and implement provider sync as a focused Python module called by `launcher.launch_and_inject()` before `launch_codex_app()`. The sync module reads `~/.codex/config.toml`, backs up writable state, locks with `~/.codex/tmp/provider-sync.lock`, updates rollout first-line metadata and SQLite provider metadata, logs skippable lock/busy conditions, and only blocks launch on unsafe write/restore failures.
 
@@ -12,10 +12,10 @@
 
 ## File Structure
 
-- Create `codex_session_delete/settings_store.py`: backend-readable Codex++ settings store with defaults and atomic writes.
+- Create `codex_session_delete/settings_store.py`: backend-readable GPT Work++ settings store with defaults and atomic writes.
 - Create `codex_session_delete/provider_sync.py`: provider sync implementation and result model.
 - Modify `codex_session_delete/launcher.py`: load settings, expose bridge endpoints, call provider sync before launch, and log skipped/fatal sync results.
-- Modify `codex_session_delete/inject/renderer-inject.js`: add backend-backed Provider sync toggle to Codex++ menu.
+- Modify `codex_session_delete/inject/renderer-inject.js`: add backend-backed Provider sync toggle to GPT Work++ menu.
 - Modify `tests/test_launcher_user_scripts.py`: bridge settings endpoint tests.
 - Modify `tests/test_launcher_cli.py`: launch pre-sync tests.
 - Create `tests/test_settings_store.py`: backend settings tests.
@@ -232,7 +232,7 @@ def test_provider_sync_prunes_backups_to_five(tmp_path):
     for index in range(6):
         backup = backup_root / f"2000010100000{index}"
         backup.mkdir(parents=True)
-        (backup / "metadata.json").write_text(json.dumps({"managedBy": "Codex++ provider sync"}), encoding="utf-8")
+        (backup / "metadata.json").write_text(json.dumps({"managedBy": "GPT Work++ provider sync"}), encoding="utf-8")
     write_rollout(codex_home / "sessions" / "rollout-new.jsonl", provider="openai")
 
     result = run_provider_sync(codex_home)
@@ -307,7 +307,7 @@ def default_codex_home() -> Path:
 def run_provider_sync(codex_home: Path | None = None) -> ProviderSyncResult:
     home = codex_home or default_codex_home()
     if not home.exists():
-        return ProviderSyncResult(ProviderSyncStatus.SKIPPED, f"Codex home not found: {home}")
+        return ProviderSyncResult(ProviderSyncStatus.SKIPPED, f"GPT Work home not found: {home}")
     target_provider = read_current_provider(home / "config.toml")
     lock_dir = home / "tmp" / "provider-sync.lock"
     try:
@@ -432,7 +432,7 @@ def create_backup(home: Path, target_provider: str, changes: list[SessionChange]
     ]
     (backup_dir / "session-meta-backup.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     (backup_dir / "metadata.json").write_text(
-        json.dumps({"managedBy": "Codex++ provider sync", "targetProvider": target_provider}, ensure_ascii=False, indent=2),
+        json.dumps({"managedBy": "GPT Work++ provider sync", "targetProvider": target_provider}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     return backup_dir
@@ -512,7 +512,7 @@ def prune_backups(home: Path, keep_count: int = BACKUP_KEEP_COUNT) -> None:
             metadata = json.loads((path / "metadata.json").read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        if metadata.get("managedBy") == "Codex++ provider sync":
+        if metadata.get("managedBy") == "GPT Work++ provider sync":
             managed.append(path)
     managed.sort(key=lambda path: path.name, reverse=True)
     for path in managed[keep_count:]:
@@ -632,7 +632,7 @@ Run:
 
 ```bash
 git add codex_session_delete/launcher.py tests/test_launcher_cli.py
-git commit -m "Run provider sync before Codex launch"
+git commit -m "Run provider sync before GPT Work launch"
 ```
 
 ---
@@ -728,7 +728,7 @@ git commit -m "Expose backend settings bridge"
 
 - [ ] **Step 1: Write failing renderer contract test**
 
-Add this test to `tests/test_renderer_script.py` near the Codex++ menu tests:
+Add this test to `tests/test_renderer_script.py` near the GPT Work++ menu tests:
 
 ```python
 def test_renderer_script_has_backend_provider_sync_toggle():
@@ -794,14 +794,14 @@ In the existing settings rows near `conversationTimeline`, add:
 
 ```html
             <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">Provider 同步</div><div class="codex-plus-row-description">启动 Codex 前同步历史会话到当前 model_provider。</div></div>
+              <div><div class="codex-plus-row-title">Provider 同步</div><div class="codex-plus-row-description">启动 GPT Work 前同步历史会话到当前 model_provider。</div></div>
               <button type="button" class="codex-plus-toggle" data-codex-backend-setting="providerSyncEnabled"><span></span></button>
             </div>
 ```
 
 - [ ] **Step 5: Wire click handler and initial load**
 
-In the Codex++ menu click handler, after existing `[data-codex-plus-setting]` handling, add:
+In the GPT Work++ menu click handler, after existing `[data-codex-plus-setting]` handling, add:
 
 ```javascript
       const backendToggle = target?.closest("[data-codex-backend-setting]");
