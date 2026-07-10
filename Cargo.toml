@@ -4,7 +4,6 @@ members = [
   "crates/codex-plus-core",
   "crates/codex-plus-data",
   "apps/codex-plus-launcher",
-  "apps/codex-plus-manager/src-tauri",
   "apps/codex-plus-server",
 ]
 

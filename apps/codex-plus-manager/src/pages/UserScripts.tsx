@@ -33,7 +33,7 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
 } from "@ant-design/icons";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { useScriptMarketStore, useSettingsStore } from "@/lib/store";
 import type { BackendSettings, ScriptMarketItem } from "@/lib/types";
 import { isSuccessStatus, stringifyError, formatTime } from "@/lib/utils";

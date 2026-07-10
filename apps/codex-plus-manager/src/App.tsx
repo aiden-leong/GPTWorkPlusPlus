@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { useSettingsStore, useOverviewStore, useLogsStore, useRelayStore } from "@/lib/store";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 
 export const App = () => {
   const setSettings = useSettingsStore((s) => s.setSettings);

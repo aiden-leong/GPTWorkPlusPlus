@@ -27,7 +27,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
 } from "@ant-design/icons";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { useSettingsStore, useZedRemoteStore } from "@/lib/store";
 import type { BackendSettings, ZedOpenStrategy, ZedRemoteProject } from "@/lib/types";
 import { formatTime, isSuccessStatus, stringifyError } from "@/lib/utils";

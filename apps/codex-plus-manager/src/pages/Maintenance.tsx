@@ -33,8 +33,7 @@ import {
   ExclamationCircleOutlined,
   CheckCircleOutlined,
 } from "@ant-design/icons";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import {
   useSettingsStore,
   useOverviewStore,
@@ -117,19 +116,9 @@ export const Maintenance = () => {
   };
 
   // 选 Codex 应用
-  const handlePickCodexPath = async () => {
-    try {
-      const selected = await openDialog({
-        multiple: false,
-        directory: false,
-        title: "选择 Codex 应用",
-      });
-      if (typeof selected === "string" && selected) {
-        setCodexPath(selected);
-      }
-    } catch (e) {
-      message.error(`无法选择：${stringifyError(e)}`);
-    }
+  // Web 模式下没有 Tauri 文件选择器，使用上方文本框手动输入路径。
+  const handlePickCodexPath = () => {
+    message.info("Web 模式下请在文本框中直接输入 Codex.app 路径");
   };
 
   // 入口管理

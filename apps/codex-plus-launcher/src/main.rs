@@ -523,6 +523,15 @@ impl BridgeRuntimeService for LauncherRuntimeService {
         self.user_scripts.inventory()
     }
 
+    async fn ads(&self) -> anyhow::Result<Value> {
+        // 与 core 端默认实现保持一致：返回空广告列表。
+        // 若 launcher 后续要做真实广告投放，覆盖这里即可。
+        Ok(serde_json::json!({
+            "version": 1,
+            "ads": []
+        }))
+    }
+
     async fn open_devtools(&self) -> anyhow::Result<Value> {
         let debug_port = *self.debug_port.lock().unwrap();
         let targets = codex_plus_core::cdp::list_targets(debug_port).await?;

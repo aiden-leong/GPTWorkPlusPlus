@@ -26,7 +26,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import {
   useSettingsStore,
   useRelayStore,

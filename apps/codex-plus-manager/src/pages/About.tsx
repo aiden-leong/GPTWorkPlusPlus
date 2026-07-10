@@ -18,7 +18,7 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useLogsStore, useUIStore } from "@/lib/store";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { isSuccessStatus } from "@/lib/utils";
 
 const { Title, Paragraph, Text } = Typography;

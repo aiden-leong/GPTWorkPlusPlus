@@ -29,7 +29,7 @@ import {
   CodeOutlined,
   AppstoreOutlined,
 } from "@ant-design/icons";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { useSettingsStore, useContextStore } from "@/lib/store";
 import type { CodexContextEntries, CodexContextEntry, BackendSettings } from "@/lib/types";
 import { isSuccessStatus } from "@/lib/utils";

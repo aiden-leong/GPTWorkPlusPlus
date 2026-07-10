@@ -1,7 +1,7 @@
 // 概览页 - 健康检查、最近启动、日志、诊断
 import { Card, Col, Row, Statistic, Typography, Space, Button, Alert, Divider } from "antd";
 import { useEffect } from "react";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { useOverviewStore, useLogsStore, useSettingsStore } from "@/lib/store";
 import { formatDuration, isSuccessStatus } from "@/lib/utils";
 

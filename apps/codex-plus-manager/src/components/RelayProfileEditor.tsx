@@ -28,7 +28,7 @@ import {
   ExperimentOutlined,
   FunctionOutlined,
 } from "@ant-design/icons";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { useSettingsStore, useUIStore } from "@/lib/store";
 import type { RelayProfile, BackendSettings, RelayMode, RelayProtocol } from "@/lib/types";
 import { isSuccessStatus } from "@/lib/utils";

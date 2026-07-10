@@ -4,18 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tauri dev",
-    "build": "cargo build -p codex-plus-launcher --release && tauri build",
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
     "check": "tsc --noEmit -p tsconfig.json",
-    "vite:dev": "vite --host 127.0.0.1 --port 1420",
+    "vite:dev": "vite --host 127.0.0.1 --port 5173",
     "vite:build": "vite build"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
-    "@tauri-apps/api": "^2.0.0",
-    "@tauri-apps/cli": "^2.0.0",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
     "@types/sortablejs": "^1.15.9",
     "antd": "^5.29.3",
     "clsx": "^2.1.1",

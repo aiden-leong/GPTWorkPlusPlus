@@ -28,7 +28,7 @@ import {
   FolderOpenOutlined,
   ClockCircleOutlined,
 } from "@ant-design/icons";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { useSessionsStore } from "@/lib/store";
 import type { LocalSession } from "@/lib/types";
 import { formatTime, isSuccessStatus, stringifyError, truncateSessionDeletePreview } from "@/lib/utils";

@@ -19,7 +19,7 @@ import {
 import { useUIStore } from "@/lib/store";
 import { NoticeManager } from "@/components/NoticeManager";
 import { ConfirmManager } from "@/components/ConfirmManager";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 
 const { Sider, Content, Header } = Layout;
 const { Text } = Typography;

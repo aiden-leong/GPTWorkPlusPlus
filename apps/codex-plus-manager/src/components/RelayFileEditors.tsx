@@ -20,7 +20,7 @@ import {
   EyeOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
-import { tauri } from "@/lib/tauri";
+import { api as tauri } from "@/lib/api";
 import { useRelayStore } from "@/lib/store";
 import { isSuccessStatus } from "@/lib/utils";
 import { globalConfirm } from "@/components/ConfirmManager";
