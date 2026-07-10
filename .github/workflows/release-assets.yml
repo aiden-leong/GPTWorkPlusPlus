@@ -8,8 +8,9 @@ permissions:
   contents: write
 
 jobs:
-  windows-installer:
-    runs-on: windows-latest
+  web-manager-bundle:
+    name: Web manager bundle
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout release tag
         uses: actions/checkout@v4
@@ -21,12 +22,6 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install NSIS
-        run: choco install nsis -y
-
       - name: Install frontend dependencies
         working-directory: apps/codex-plus-manager
         run: npm install --package-lock=false
@@ -35,127 +30,66 @@ jobs:
         working-directory: apps/codex-plus-manager
         run: npm run vite:build
 
-      - name: Build binaries
-        run: cargo build --release
-
-      - name: Stage Windows app files
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force dist/windows/app | Out-Null
-          Copy-Item target/release/codex-plus-plus.exe dist/windows/app/
-          Copy-Item target/release/codex-plus-plus-manager.exe dist/windows/app/
-
-      - name: Build Windows zip asset
-        shell: pwsh
-        run: |
-          $version = "${{ github.event.release.tag_name }}".TrimStart("v", "V")
-          New-Item -ItemType Directory -Force dist/windows | Out-Null
-          Compress-Archive -Path dist/windows/app/* -DestinationPath "dist/windows/CodexPlusPlus-$version-windows-x64.zip" -Force
-
-      - name: Build Windows installer
-        shell: pwsh
-        run: |
-          $version = "${{ github.event.release.tag_name }}".TrimStart("v", "V")
-          $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
-          if (-not (Test-Path $makensis)) {
-            $makensis = "makensis"
-          }
-          Push-Location scripts/installer/windows
-          & $makensis "/INPUTCHARSET" "UTF8" "/DVERSION=$version" CodexPlusPlus.nsi
-          Pop-Location
-
-      - name: Upload Windows installer
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.release.tag_name }}
-          files: |
-            dist/windows/*.exe
-            dist/windows/*.zip
-
-  macos-dmg:
-    name: macOS DMG (${{ matrix.arch }})
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x64
-            runner: macos-15-intel
-            target: x86_64-apple-darwin
-          - arch: arm64
-            runner: macos-14
-            target: aarch64-apple-darwin
-    steps:
-      - name: Checkout release tag
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Install frontend dependencies
-        working-directory: apps/codex-plus-manager
+      - name: Install server dependencies
+        working-directory: apps/codex-plus-manager/server
         run: npm install --package-lock=false
 
-      - name: Build frontend
-        working-directory: apps/codex-plus-manager
-        run: npm run vite:build
-
-      - name: Build binaries
-        run: cargo build --release --target ${{ matrix.target }}
-
-      - name: Build macOS DMG
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          VERSION="${VERSION#V}"
-          BINARY_DIR="$PWD/target/${{ matrix.target }}/release" bash scripts/installer/macos/package-dmg.sh "$VERSION" "${{ matrix.arch }}"
-
-      - name: Build macOS zip asset
+      - name: Package tarball
         shell: bash
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          VERSION="${VERSION#V}"
-          mkdir -p dist/macos/app-${{ matrix.arch }}
-          cp "target/${{ matrix.target }}/release/codex-plus-plus" "dist/macos/app-${{ matrix.arch }}/"
-          cp "target/${{ matrix.target }}/release/codex-plus-plus-manager" "dist/macos/app-${{ matrix.arch }}/"
-          (cd dist/macos && zip -r "CodexPlusPlus-${VERSION}-macos-${{ matrix.arch }}.zip" "app-${{ matrix.arch }}")
-
-      - name: Verify macOS bundle structure
-        run: |
           set -euo pipefail
-          test -L "dist/macos/stage/Applications"
-          test "$(readlink "dist/macos/stage/Applications")" = "/Applications"
-          for app in "dist/macos/stage/Codex++.app" "dist/macos/stage/Codex++ 管理工具.app"; do
-            test -f "$app/Contents/Info.plist"
-            test -f "$app/Contents/PkgInfo"
-            test -x "$app/Contents/MacOS/$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")"
-            plutil -lint "$app/Contents/Info.plist" >/dev/null
-            codesign -dv "$app" >/dev/null 2>&1
-            echo "verified: $app"
-          done
+          version="${GITHUB_REF_NAME#v}"
+          version="${version#V}"
+          stage="dist/codex-plus-manager-${version}"
+          rm -rf dist
+          mkdir -p "${stage}"
+          # frontend bundle
+          cp -R apps/codex-plus-manager/dist "${stage}/dist"
+          # node server (with its node_modules)
+          cp -R apps/codex-plus-manager/server "${stage}/server"
+          # launchers
+          mkdir -p "${stage}/bin"
+          cat > "${stage}/bin/start.sh" <<'SH'
+          #!/usr/bin/env bash
+          set -e
+          cd "$(dirname "$0")/.."
+          exec node server/index.js "$@"
+          SH
+          cat > "${stage}/bin/start.bat" <<'BAT'
+          @echo off
+          cd /d "%~dp0\.."
+          node server\index.js %*
+          BAT
+          chmod +x "${stage}/bin/start.sh"
+          cat > "${stage}/README.txt" <<'TXT'
+          Codex++ Web Manager
+          ===================
 
-      - name: Upload macOS DMG
+          Quick start:
+            ./bin/start.sh     # macOS / Linux
+            bin\start.bat      # Windows
+
+          Then open http://127.0.0.1:18794 in your browser.
+          The Vite dev server is not required for the built bundle.
+
+          Custom port:  PORT=3000 ./bin/start.sh
+          Custom CORS:  ALLOWED_ORIGIN=http://localhost:3000 ./bin/start.sh
+          TXT
+          tar -C dist -czf "dist/codex-plus-manager-${version}.tar.gz" "codex-plus-manager-${version}"
+          echo "built dist/codex-plus-manager-${version}.tar.gz"
+          ls -lh dist/
+
+      - name: Upload tarball
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.release.tag_name }}
-          files: |
-            dist/macos/*.dmg
-            dist/macos/*.zip
+          files: dist/*.tar.gz
 
   latest-json:
     name: Upload static latest.json
     runs-on: ubuntu-latest
     needs:
-      - windows-installer
-      - macos-dmg
+      - web-manager-bundle
     steps:
       - name: Generate latest.json
         env:
