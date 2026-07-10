@@ -159,7 +159,7 @@ export const EN_PLAIN: Record<string, string> = {
   "点击建议后自动发送；关闭时只填入输入框。": "Automatically sends after clicking a suggestion. When off, it only fills the composer.",
   "刚刚启动": "Just launched",
   "删除": "Delete",
-  "删除会创建本地备份；如果 Codex App 正在使用该会话，建议先关闭对应会话窗口再操作。":
+  "删除会创建本地备份；如果 GPT Work 正在使用该会话，建议先关闭对应会话窗口再操作。":
     "Deletion creates a local backup; if the Codex app is using this session, close the session window first.",
   "删除会话": "Delete session",
   "删除供应商": "Delete provider",
@@ -199,7 +199,7 @@ export const EN_PLAIN: Record<string, string> = {
   "同步 Zed settings": "Sync Zed settings",
   "同步目标": "Sync target",
   "名称": "Name",
-  "启动 Codex App 时追加到默认 CDP 参数后。留空则保持默认启动行为。":
+  "启动 GPT Work 时追加到默认 CDP 参数后。留空则保持默认启动行为。":
     "Appended after the default CDP arguments when launching the Codex app. Leave empty to keep default launch behavior.",
   "启动 Codex++": "Launch Codex++",
   "启动任务": "Launch task",
@@ -293,7 +293,7 @@ export const EN_PLAIN: Record<string, string> = {
   "开启后，通过 Codex++ 启动 Codex 前自动整理一次旧对话的归属标记。":
     "When on, tidies up ownership tags of old conversations once before launching Codex through Codex++.",
   "强制中文界面": "Force Chinese UI",
-  "强制启用 Codex App 内置 zh-CN 语言包，避免 Statsig/VPN 不通时回退英文。需重启 Codex 才能完整生效。":
+  "强制启用 GPT Work 内置 zh-CN 语言包，避免 Statsig/VPN 不通时回退英文。需重启 Codex 才能完整生效。":
     "Forces the Codex app's built-in zh-CN language pack to avoid falling back to English when Statsig/VPN is unreachable. Requires restarting Codex to fully apply.",
   "当前": "Current",
   "当前 provider": "current provider",

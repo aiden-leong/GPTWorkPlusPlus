@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add upstream branch choices to Codex App's native start-new-chat branch dropdown so `New worktree` can start from `upstream/<base>` without a separate Codex++ dialog.
+**Goal:** Add upstream branch choices to GPT Work's native start-new-chat branch dropdown so `New worktree` can start from `upstream/<base>` without a separate Codex++ dialog.
 
 **Architecture:** Extend the existing upstream worktree backend defaults with structured upstream refs, then add a conservative renderer adapter that injects `Upstream` options into native branch menus and records the selected upstream ref for the existing native-create interception path. Keep the manual Codex++ dialog as fallback for now, but make the native dropdown path the primary UX.
 

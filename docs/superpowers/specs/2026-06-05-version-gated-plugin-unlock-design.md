@@ -1,8 +1,8 @@
 # Version-Gated Plugin Unlock Strategy Design
 
-**Goal:** Automatically choose the old or new plugin unlock strategy based on the installed Codex App version, while preserving manual switches for plugin marketplace unlock, force entry unlock, and force install/load.
+**Goal:** Automatically choose the old or new plugin unlock strategy based on the installed GPT Work version, while preserving manual switches for plugin marketplace unlock, force entry unlock, and force install/load.
 
-**Architecture:** Reuse backend Codex App version detection and expose the detected version to the injected runtime settings payload. The injection script compares the Codex App version against a fixed cutoff (`26.601.21317`) and chooses a legacy or modern plugin unlock strategy at scan time.
+**Architecture:** Reuse backend GPT Work version detection and expose the detected version to the injected runtime settings payload. The injection script compares the GPT Work version against a fixed cutoff (`26.601.21317`) and chooses a legacy or modern plugin unlock strategy at scan time.
 
 **Tech Stack:** Rust backend settings/launcher helper routes, Codex++ runtime JavaScript injection, static injection tests in `codex-plus-core`, React/Tauri manager settings UI only if a status hint is added.
 
@@ -10,10 +10,10 @@
 
 ## Requirements
 
-1. Use Codex App version to select plugin unlock strategy.
-   - If Codex App version is lower than `26.601.21317`, prefer the legacy 1.1.9 plugin entry unlock path.
-   - If Codex App version is greater than or equal to `26.601.21317`, prefer the current modern marketplace unlock path.
-   - If Codex App version cannot be read or parsed, preserve current manual-switch behavior.
+1. Use GPT Work version to select plugin unlock strategy.
+   - If GPT Work version is lower than `26.601.21317`, prefer the legacy 1.1.9 plugin entry unlock path.
+   - If GPT Work version is greater than or equal to `26.601.21317`, prefer the current modern marketplace unlock path.
+   - If GPT Work version cannot be read or parsed, preserve current manual-switch behavior.
 
 2. Preserve existing manual switches.
    - `插件市场解锁` controls the modern marketplace request/filter patch.
@@ -26,8 +26,8 @@
    - If launch mode is `relay`, plugin unlock work stays disabled.
    - No `app.asar` patching.
 
-4. Do not persist runtime-only Codex App version into settings JSON.
-   - Version is read dynamically from the configured/discovered Codex App path.
+4. Do not persist runtime-only GPT Work version into settings JSON.
+   - Version is read dynamically from the configured/discovered GPT Work path.
    - The injected settings response may include `codexAppVersion`, but saving settings must not write that field.
 
 ## Version Cutoff
@@ -40,7 +40,7 @@ PLUGIN_LEGACY_ENTRY_UNLOCK_BEFORE = 26.601.21317
 
 Rules:
 
-| Codex App version | Strategy | Main behavior |
+| GPT Work version | Strategy | Main behavior |
 | --- | --- | --- |
 | `< 26.601.21317` | `legacy` | Run legacy `enablePluginEntry()` when entry unlock is enabled. |
 | `>= 26.601.21317` | `modern` | Run modern marketplace request/filter patches when marketplace unlock is enabled. |
@@ -66,7 +66,7 @@ If the version cannot be read:
 
 Implementation options for locating the app version:
 
-1. Use the configured Codex App path from settings if present.
+1. Use the configured GPT Work path from settings if present.
 2. Fall back to the same discovery path used by `load_overview`.
 3. Use `codex_plus_core::app_paths::codex_app_version(path)` to parse the version.
 
@@ -133,16 +133,16 @@ Avoid logging this on every scan if it becomes noisy; either log only when the s
 
 Optional UI hint in the injected Codex++ menu:
 
-- Legacy: `检测到旧版 Codex App，自动优先使用旧入口解锁。`
-- Modern: `检测到新版 Codex App，自动优先使用插件市场解锁。`
-- Unknown: `未读取到 Codex App 版本，按手动开关执行。`
+- Legacy: `检测到旧版 GPT Work，自动优先使用旧入口解锁。`
+- Modern: `检测到新版 GPT Work，自动优先使用插件市场解锁。`
+- Unknown: `未读取到 GPT Work 版本，按手动开关执行。`
 
 The hint is helpful but not required for the first implementation if tests cover the behavior.
 
 ## Testing Plan
 
 1. Backend route tests:
-   - `/settings/get` response contains `codexAppVersion` when a Codex App version is discoverable.
+   - `/settings/get` response contains `codexAppVersion` when a GPT Work version is discoverable.
    - Saving settings does not persist `codexAppVersion`.
    - If version discovery fails, response contains an empty string rather than failing the route.
 

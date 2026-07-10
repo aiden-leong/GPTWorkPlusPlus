@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make upstream-based worktree creation feel native in Codex App by adding `upstream/*` choices to the start-new-chat branch dropdown instead of exposing a separate Codex++ worktree dialog.
+Make upstream-based worktree creation feel native in GPT Work by adding `upstream/*` choices to the start-new-chat branch dropdown instead of exposing a separate Codex++ worktree dialog.
 
 ## User Experience
 
@@ -86,4 +86,4 @@ Run these checks:
 
 ## Out of Scope
 
-This change will not patch Codex App's bundled source, will not require users to type worktree paths manually, and will not replace the full native branch picker implementation. It only injects remote branch choices and routes upstream selections through the Codex++ bridge.
+This change will not patch GPT Work's bundled source, will not require users to type worktree paths manually, and will not replace the full native branch picker implementation. It only injects remote branch choices and routes upstream selections through the Codex++ bridge.

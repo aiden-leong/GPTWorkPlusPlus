@@ -2,7 +2,7 @@
 
 ## Summary
 
-Codex++ will fully replace the current Python backend with Rust and add a Tauri management console. The existing Codex App enhancement model remains: Codex++ launches Codex with CDP flags, injects a bridge plus `renderer-inject.js`, and handles local operations such as delete, undo, export, move, settings, status, provider sync, and user scripts.
+Codex++ will fully replace the current Python backend with Rust and add a Tauri management console. The existing GPT Work enhancement model remains: Codex++ launches Codex with CDP flags, injects a bridge plus `renderer-inject.js`, and handles local operations such as delete, undo, export, move, settings, status, provider sync, and user scripts.
 
 The final user experience has two desktop entry points:
 
@@ -14,7 +14,7 @@ There is no separate user-facing CLI. Launch behavior belongs to the silent laun
 ## Goals
 
 - Replace the Python backend completely with Rust.
-- Preserve the existing injected Codex App enhancements and user-facing behavior.
+- Preserve the existing injected GPT Work enhancements and user-facing behavior.
 - Add a Tauri management console without making it required for daily launch.
 - Generate two desktop entry points: silent launcher and management tool.
 - Use one shared Rust core for the silent launcher and Tauri commands.
@@ -59,7 +59,7 @@ The Rust project will be organized as a workspace:
 - `renderer-inject.js`
   - Remains the injected Codex renderer enhancement script.
   - Receives helper/bridge configuration from Rust during injection.
-  - Keeps the current Codex App in-place enhancements: menu, delete, undo, export, move, settings panel, timeline, plugin unlocks, user scripts, and ads/sponsor assets.
+  - Keeps the current GPT Work in-place enhancements: menu, delete, undo, export, move, settings panel, timeline, plugin unlocks, user scripts, and ads/sponsor assets.
 
 ## Entry Points
 
@@ -69,7 +69,7 @@ The `Codex++` desktop entry point is silent:
 
 1. It starts the no-window Rust launcher.
 2. It does not show a Tauri management window.
-3. It launches Codex App with CDP flags.
+3. It launches GPT Work with CDP flags.
 4. It starts the local Rust bridge/helper runtime.
 5. It injects `renderer-inject.js`.
 6. It stays alive until Codex exits.
@@ -228,7 +228,7 @@ Python removal gate:
 Python files should only be deleted after the Rust implementation passes parity checks for:
 
 - Silent launch.
-- Codex App CDP injection.
+- GPT Work CDP injection.
 - Bridge routes.
 - Delete and undo.
 - Markdown export.

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Codex++ will add an optional enhancement for Codex App worktree creation. The feature makes new worktrees start from a remote tracking branch such as `upstream/main`, instead of inheriting a stale local `HEAD` or unsynced branch state.
+Codex++ will add an optional enhancement for GPT Work worktree creation. The feature makes new worktrees start from a remote tracking branch such as `upstream/main`, instead of inheriting a stale local `HEAD` or unsynced branch state.
 
 The intended Git equivalent is:
 
@@ -11,15 +11,15 @@ git fetch upstream <base-branch>
 git worktree add -b <new-branch> <worktree-path> upstream/<base-branch>
 ```
 
-The implementation will first add a reliable Rust backend capability and a Codex++ menu entry. After that is tested, the renderer injection can enhance Codex App's native worktree creation UI when the current Codex version exposes a recognizable action point. If the native action point cannot be detected, Codex++ must show a clear fallback message and keep the menu entry usable.
+The implementation will first add a reliable Rust backend capability and a Codex++ menu entry. After that is tested, the renderer injection can enhance GPT Work's native worktree creation UI when the current Codex version exposes a recognizable action point. If the native action point cannot be detected, Codex++ must show a clear fallback message and keep the menu entry usable.
 
 ## Goals
 
 - Create new worktrees from a remote tracking ref, defaulting to `upstream/<base-branch>`.
-- Reduce conflicts caused by Codex App creating worktrees from stale local state.
+- Reduce conflicts caused by GPT Work creating worktrees from stale local state.
 - Keep the Git operation explicit and testable in Rust, not hidden inside the renderer script.
-- Provide a stable Codex++ menu workflow even when Codex App UI internals change.
-- Enhance the native Codex App worktree flow when it can be detected safely.
+- Provide a stable Codex++ menu workflow even when GPT Work UI internals change.
+- Enhance the native GPT Work worktree flow when it can be detected safely.
 - Report actionable errors for missing remotes, missing base branches, existing branches, existing paths, and invalid repositories.
 
 ## Non-Goals
@@ -50,7 +50,7 @@ Create from upstream/<base-branch>
 
 On success, Codex++ shows the created worktree path and source ref. On failure, Codex++ shows a concise error and keeps the user's entered values so they can fix the issue.
 
-When native Codex App worktree enhancement is active, the user can continue using Codex's normal worktree creation path. Codex++ intercepts or augments the action only when it can identify the repository path, new branch name, worktree path, and base branch. If any required value is ambiguous, Codex++ does not run Git. It shows a toast that says the native flow could not be safely enhanced and points the user to the Codex++ menu entry.
+When native GPT Work worktree enhancement is active, the user can continue using Codex's normal worktree creation path. Codex++ intercepts or augments the action only when it can identify the repository path, new branch name, worktree path, and base branch. If any required value is ambiguous, Codex++ does not run Git. It shows a toast that says the native flow could not be safely enhanced and points the user to the Codex++ menu entry.
 
 ## Backend Architecture
 
@@ -168,12 +168,12 @@ The renderer script should:
 5. Call `/upstream-worktree/create` on submit.
 6. Display success or failure through existing toast patterns.
 
-Native Codex App enhancement should be implemented as a guarded adapter:
+Native GPT Work enhancement should be implemented as a guarded adapter:
 
 - Detect known Codex worktree creation controls through stable attributes first, then text/structure as fallback.
 - Extract repository path, branch name, target path, and base branch before intercepting.
 - If extraction is incomplete, do not prevent the native action unless Codex++ can show a clear fallback.
-- Keep the adapter versioned so future Codex App DOM changes can be diagnosed.
+- Keep the adapter versioned so future GPT Work DOM changes can be diagnosed.
 
 ## Settings
 
@@ -221,8 +221,8 @@ Manual verification should cover:
 
 Phase 1 adds the Rust backend module, bridge routes, tests, and Codex++ menu entry.
 
-Phase 2 adds native Codex App worktree UI detection and guarded interception.
+Phase 2 adds native GPT Work worktree UI detection and guarded interception.
 
-Phase 3 updates README feature bullets and troubleshooting notes after the behavior is verified against the current Codex App version.
+Phase 3 updates README feature bullets and troubleshooting notes after the behavior is verified against the current GPT Work version.
 
-This staged rollout keeps the Git operation reliable before depending on Codex App's internal UI shape.
+This staged rollout keeps the Git operation reliable before depending on GPT Work's internal UI shape.

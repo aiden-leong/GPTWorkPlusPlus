@@ -16,7 +16,7 @@
   <img alt="Tauri" src="https://img.shields.io/badge/tauri-2.x-24C8DB">
 </p>
 
-Codex++ is an external enhancement launcher and manager for the Codex App. It does not modify the original Codex installation. Instead, it starts Codex externally and injects enhancements through the Chromium DevTools Protocol.
+Codex++ is an external enhancement launcher and manager for the GPT Work. It does not modify the original Codex installation. Instead, it starts Codex externally and injects enhancements through the Chromium DevTools Protocol.
 
 ## Quick Start
 
@@ -56,7 +56,7 @@ Relay injection is for users who are already logged in with an official ChatGPT 
 
 The boundary of this hybrid mode is:
 
-- The official ChatGPT/Codex login state still owns Codex App account features and the plugin entry.
+- The official ChatGPT/Codex login state still owns GPT Work account features and the plugin entry.
 - The relay profile only controls the Base URL, key, and model names used for model requests.
 - The compatible API provider is not tied to any specific vendor; it only needs to match the selected upstream protocol and Codex configuration.
 - Clearing API mode should return Codex to the official login mode so the official account and plugins keep working.
@@ -177,4 +177,4 @@ scripts/installer/
 
 ## Notes
 
-Codex++ is an external enhancement tool and does not modify original Codex App files. If a future Codex App update changes page structure, the injection script may need updates.
+Codex++ is an external enhancement tool and does not modify original GPT Work files. If a future GPT Work update changes page structure, the injection script may need updates.

@@ -486,7 +486,7 @@ impl LaunchHooks for DefaultLaunchHooks {
             app_dir,
             Some(settings.codex_app_path.as_str()),
         )
-        .ok_or_else(|| anyhow::anyhow!("Codex App directory not found"))
+        .ok_or_else(|| anyhow::anyhow!("GPT Work directory not found"))
     }
 
     fn select_debug_port(&self, requested: u16) -> u16 {

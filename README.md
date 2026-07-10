@@ -16,7 +16,7 @@
   <img alt="Tauri" src="https://img.shields.io/badge/tauri-2.x-24C8DB">
 </p>
 
-GPT Work++ 是面向 GPT Work App 的外部增强启动器和管理工具。它不修改 GPT Work App 原始安装文件，而是通过外部 launcher 启动 GPT Work，并使用 Chromium DevTools Protocol 注入增强脚本。
+GPT Work++ 是面向 GPT Work 的外部增强启动器和管理工具。它不修改 GPT Work 原始安装文件，而是通过外部 launcher 启动 GPT Work，并使用 Chromium DevTools Protocol 注入增强脚本。
 
 ## 快速使用
 
@@ -57,7 +57,7 @@ Windows 安装包会创建桌面和开始菜单快捷方式。macOS DMG 会安�
 
 这种混合模式的边界是：
 
-- 官方 ChatGPT/Codex 登录态继续负责 Codex App 的账号能力和插件入口。
+- 官方 ChatGPT/Codex 登录态继续负责 GPT Work 的账号能力和插件入口。
 - 中转配置只接管模型请求使用的 Base URL、Key 和模型名称。
 - 兼容 API 供应商不需要固定为某一家；只要上游协议和 Codex 配置匹配即可。
 - 清除 API 模式后应能回到官方登录态，继续使用官方账号和插件。
@@ -189,4 +189,4 @@ scripts/installer/
 
 ## 说明
 
-GPT Work++ 是外部增强工具，不修改 Codex App 原始文件。Codex App 更新后，如果页面结构变化，可能需要更新注入脚本。
+GPT Work++ 是外部增强工具，不修改 GPT Work 原始文件。GPT Work 更新后，如果页面结构变化，可能需要更新注入脚本。

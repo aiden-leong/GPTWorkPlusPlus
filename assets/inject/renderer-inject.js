@@ -1416,7 +1416,7 @@
     if (!codexServiceTierModulePromises.has(namePart)) {
       const promise = Promise.resolve().then(async () => {
         const url = codexAppAssetUrl(namePart) || await codexAppAssetUrlFromScriptText(namePart);
-        if (!url) throw new Error(`未找到 Codex App asset: ${namePart}`);
+        if (!url) throw new Error(`未找到 GPT Work asset: ${namePart}`);
         return await import(url);
       }).catch((error) => {
         codexServiceTierModulePromises.delete(namePart);

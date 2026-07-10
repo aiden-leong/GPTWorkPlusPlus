@@ -141,7 +141,7 @@ Codex++ injected menu shows three plugin rows:
    - Description: `解除 App unavailable / 应用不可用导致的前端安装禁用。`
    - Setting: `forcePluginInstall`
 
-The manager settings UI should expose matching independent switches if it already surfaces these Codex App enhancement settings.
+The manager settings UI should expose matching independent switches if it already surfaces these GPT Work enhancement settings.
 
 ## Error Handling and Diagnostics
 
