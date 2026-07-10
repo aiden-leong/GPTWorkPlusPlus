@@ -719,7 +719,7 @@ impl LaunchHooks for DefaultLaunchHooks {
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .spawn()
-                .context("failed to launch macOS Codex app")?;
+                .context("failed to launch macOS GPT Work app")?;
             *self.child.lock().await = Some(child);
             if let Some(inspector_port) = native_menu_inspector_port {
                 start_native_menu_localizer(inspector_port);
@@ -743,7 +743,7 @@ impl LaunchHooks for DefaultLaunchHooks {
         };
         let executable = command
             .first()
-            .ok_or_else(|| anyhow::anyhow!("Codex command is empty"))?;
+            .ok_or_else(|| anyhow::anyhow!("GPT Work command is empty"))?;
         let mut child_command = Command::new(executable);
         child_command
             .args(&command[1..])
@@ -1724,7 +1724,7 @@ async fn retry_injection(debug_port: u16, helper_port: u16) -> anyhow::Result<()
             }
         }
     }
-    Err(last_error.unwrap_or_else(|| anyhow::anyhow!("Codex injection failed")))
+    Err(last_error.unwrap_or_else(|| anyhow::anyhow!("GPT Work injection failed")))
 }
 
 pub async fn check_and_reinject_bridge(debug_port: u16, helper_port: u16) -> bool {
@@ -1877,7 +1877,7 @@ pub fn build_macos_cleanup_command(
     let app_name = app_dir
         .file_stem()
         .and_then(|value| value.to_str())
-        .unwrap_or("Codex");
+        .unwrap_or("GPT Work");
     Some(vec![
         "osascript".to_string(),
         "-e".to_string(),
@@ -1920,7 +1920,7 @@ async fn is_macos_app_running(app_dir: &Path) -> bool {
     let app_name = app_dir
         .file_stem()
         .and_then(|value| value.to_str())
-        .unwrap_or("Codex");
+        .unwrap_or("GPT Work");
     let script = format!(
         r#"application "{}" is running"#,
         app_name.replace('"', "\\\"")

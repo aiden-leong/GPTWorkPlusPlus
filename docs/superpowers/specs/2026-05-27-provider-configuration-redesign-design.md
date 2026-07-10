@@ -11,7 +11,7 @@ The redesign aims for high compatibility with cc-switch’s provider model and i
 - Replace `relayProfiles` as the main provider data model.
 - Introduce a standalone provider entity with cc-switch-compatible core fields.
 - Let the manager app manage providers through a dedicated provider configuration screen.
-- Generate Codex runtime/live configuration from the active provider.
+- Generate GPT Work runtime/live configuration from the active provider.
 - Migrate existing user data from `relayProfiles` automatically.
 - Preserve and improve external provider import flows so they create providers directly.
 
@@ -49,7 +49,7 @@ The provider model should align closely with cc-switch’s core fields:
 - `notes` (optional)
 - `meta` (optional structured metadata)
 
-`settingsConfig` is the main payload and carries the provider-specific runtime configuration currently spread across relay-profile fields. The exact JSON/TOML shape should be chosen so current launch/runtime code can deterministically derive the generated Codex config.
+`settingsConfig` is the main payload and carries the provider-specific runtime configuration currently spread across relay-profile fields. The exact JSON/TOML shape should be chosen so current launch/runtime code can deterministically derive the generated GPT Work config.
 
 ### 2. BackendSettings only stores global state
 
@@ -68,8 +68,8 @@ All flows that currently depend on relay profiles should switch to the following
 
 1. Read `activeProviderId` from settings.
 2. Load the referenced provider from provider storage.
-3. Derive the live Codex config, auth config, provider selection, and any runtime relay/provider artifacts from that provider.
-4. Apply those generated artifacts to the current Codex home/config targets.
+3. Derive the live GPT Work config, auth config, provider selection, and any runtime relay/provider artifacts from that provider.
+4. Apply those generated artifacts to the current GPT Work home/config targets.
 
 This keeps runtime behavior deterministic while decoupling editing/storage from generated live files.
 
@@ -182,7 +182,7 @@ That means:
 ### Supported import sources in this phase
 
 1. Automatic migration from legacy local relay profiles
-2. Existing external Codex provider import path
+2. Existing external GPT Work provider import path
 3. Optional direct import from cc-switch-compatible provider datasets if the format is already accessible with reasonable effort
 
 The first two are required for this redesign. The third is nice-to-have and should only be included if it does not delay the core refactor.

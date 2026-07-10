@@ -231,7 +231,7 @@
             errors.push(`${candidate}: ${error.message}`);
           }
         }
-        throw new Error(`Codex app actions unavailable (${errors.join("; ")})`);
+        throw new Error(`GPT Work app actions unavailable (${errors.join("; ")})`);
       })();
     }
 

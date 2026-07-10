@@ -14,9 +14,9 @@ Clicking a marker smoothly scrolls the conversation to the corresponding user me
 
 ## Architecture
 
-Implement the feature in `codex_session_delete/inject/renderer-inject.js` as renderer-side DOM injection, matching the existing Codex++ enhancement pattern.
+Implement the feature in `codex_session_delete/inject/renderer-inject.js` as renderer-side DOM injection, matching the existing GPT Work++ enhancement pattern.
 
-The feature does not add a backend API and does not modify the Codex app bundle. It injects:
+The feature does not add a backend API and does not modify the GPT Work app bundle. It injects:
 
 - timeline CSS through the existing style injection path
 - one fixed timeline container in the conversation page
@@ -31,7 +31,7 @@ The injected script scans the current conversation DOM for user message nodes. F
 - plain text content used for the tooltip summary
 - the message position used to place the timeline marker
 
-Detection should prefer stable role/message structure inside the Codex conversation content. If no explicit role marker is available, matching should stay inside the main conversation region and conservatively match user-styled message nodes to avoid collecting sidebar, menu, or settings text.
+Detection should prefer stable role/message structure inside the GPT Work conversation content. If no explicit role marker is available, matching should stay inside the main conversation region and conservatively match user-styled message nodes to avoid collecting sidebar, menu, or settings text.
 
 Empty or whitespace-only user messages are skipped.
 

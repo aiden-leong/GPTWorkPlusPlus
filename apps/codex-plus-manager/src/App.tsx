@@ -599,7 +599,7 @@ const routes: Array<{ id: Route; label: string; icon: LucideIcon; badge?: string
   { id: "relay", label: t("供应商配置"), icon: KeyRound },
   { id: "sessions", label: t("会话管理"), icon: MessageCircle },
   { id: "context", label: t("工具与插件"), icon: Network },
-  { id: "enhance", label: t("Codex增强"), icon: Hammer },
+  { id: "enhance", label: t("GPT Work增强"), icon: Hammer },
   { id: "zedRemote", label: t("Zed 远程项目"), icon: ExternalLink },
   { id: "userScripts", label: t("脚本市场"), icon: FileCode2 },
   { id: "maintenance", label: t("安装维护"), icon: Wrench },
@@ -856,7 +856,7 @@ export function App() {
               ? t("正在下载插件市场快照…")
               : nextPercent < 84
                 ? t("正在解压并校验插件文件…")
-                : t("正在写入 Codex 配置…");
+                : t("正在写入 GPT Work 配置…");
         return { ...current, percent: nextPercent, message };
       });
     }, 500);
@@ -1116,7 +1116,7 @@ export function App() {
     if (result) {
       setSettings(result);
       setSettingsForm(normalizeSettings(result.settings));
-      if (!silent) showNotice(t("Codex增强模式"), result.message, result.status);
+      if (!silent) showNotice(t("GPT Work增强模式"), result.message, result.status);
     }
     return result;
   };
@@ -1252,7 +1252,7 @@ export function App() {
     }
     let switchSettings = normalizeSettings(next);
     if (!switchSettings.relayProfilesEnabled) {
-      showNotice(t("供应商配置已关闭"), t("当前不会写入 Codex config.toml / auth.json。打开供应商配置总开关后再切换。"), "failed");
+      showNotice(t("供应商配置已关闭"), t("当前不会写入 GPT Work config.toml / auth.json。打开供应商配置总开关后再切换。"), "failed");
       return;
     }
     const targetBeforeSnapshot = activeRelayProfile(switchSettings);
@@ -1410,7 +1410,7 @@ export function App() {
       void invoke("update_tray_labels", {
         showLabel: "Show window",
         quitLabel: "Quit",
-        windowTitle: "Codex++ Manager",
+        windowTitle: "GPT Work++ Manager",
       });
     }
   }, []);
@@ -1462,25 +1462,25 @@ export function App() {
         try {
           selected = await open(
             mode === "folder"
-              ? { directory: true, multiple: false, title: t("选择 Codex 应用目录") }
+              ? { directory: true, multiple: false, title: t("选择 GPT Work 应用目录") }
               : {
                   directory: false,
                   multiple: false,
                   title: t("选择 Codex.exe 或 Codex.app"),
-                  filters: [{ name: t("Codex 应用"), extensions: ["exe", "app"] }],
+                  filters: [{ name: t("GPT Work 应用"), extensions: ["exe", "app"] }],
                 },
           );
         } catch (error) {
           // Surface plugin failures (e.g. missing capability permission) so the
           // buttons no longer appear unresponsive — see #345.
           const message = error instanceof Error ? error.message : String(error);
-          showNotice(t("Codex 应用路径"), tf("打开选择器失败：{0}", [message]), "failed");
+          showNotice(t("GPT Work 应用路径"), tf("打开选择器失败：{0}", [message]), "failed");
           return;
         }
         if (typeof selected === "string" && selected.trim()) {
           const result = await saveCodexAppPath(selected.trim());
           if (result) {
-            showNotice(t("Codex 应用路径"), t("应用路径已保存，之后启动会自动复用。"), result.status);
+            showNotice(t("GPT Work 应用路径"), t("应用路径已保存，之后启动会自动复用。"), result.status);
           }
         }
       },
@@ -1491,7 +1491,7 @@ export function App() {
           setSettings(result);
           setSettingsForm(normalizeSettings(result.settings));
           setLaunchForm((current) => ({ ...current, appPath: "" }));
-          showNotice(t("Codex 应用路径"), t("已清除保存路径，后续启动会回到自动探测。"), result.status);
+          showNotice(t("GPT Work 应用路径"), t("已清除保存路径，后续启动会回到自动探测。"), result.status);
           await refreshOverview(true);
         }
       },
@@ -1520,12 +1520,12 @@ export function App() {
       saveManualCodexAppPath: async () => {
         const appPath = launchForm.appPath.trim();
         if (!appPath) {
-          showNotice(t("Codex 应用路径"), t("请先填写或选择应用路径。"), "failed");
+          showNotice(t("GPT Work 应用路径"), t("请先填写或选择应用路径。"), "failed");
           return;
         }
         const result = await saveCodexAppPath(appPath);
         if (result) {
-          showNotice(t("Codex 应用路径"), t("应用路径已保存，之后启动会自动复用。"), result.status);
+          showNotice(t("GPT Work 应用路径"), t("应用路径已保存，之后启动会自动复用。"), result.status);
         }
       },
       syncProvidersNow,
@@ -1581,7 +1581,7 @@ export function App() {
         await refreshOverview(true);
         await refreshRelay(true);
         await refreshWatcher(true);
-        showNotice(t("检查完成"), t("已刷新 Codex 应用、入口和 Watcher 状态。"), "ok");
+        showNotice(t("检查完成"), t("已刷新 GPT Work 应用、入口和 Watcher 状态。"), "ok");
       },
       installWatcher: () => watcherAction("install_watcher"),
       uninstallWatcher: () => watcherAction("uninstall_watcher"),
@@ -1862,8 +1862,8 @@ function OverviewScreen({
             <div className={`health-item ${overview?.codex_version ? "ok" : "needs-fix"}`}>
               {overview?.codex_version ? <CheckCircle2 className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
               <div>
-                <strong>{t("Codex 版本")}</strong>
-                <span>{overview?.codex_version ?? t("未检测到 Codex 应用版本。")}</span>
+                <strong>{t("GPT Work 版本")}</strong>
+                <span>{overview?.codex_version ?? t("未检测到 GPT Work 应用版本。")}</span>
               </div>
               <Badge status={overview?.codex_version ? "ok" : "not_checked"} />
             </div>
@@ -2013,7 +2013,7 @@ function RelayScreen({
             />
             <span>
               <strong>{t("启用供应商配置切换")}</strong>
-              <small>{t("关闭后本工具不会在手动切换时写入 Codex 的 config.toml / auth.json；启动 Codex 时始终不会自动改这些文件。")}</small>
+              <small>{t("关闭后本工具不会在手动切换时写入 GPT Work 的 config.toml / auth.json；启动 Codex 时始终不会自动改这些文件。")}</small>
             </span>
           </label>
           <div className="relay-add-row">
@@ -2158,7 +2158,7 @@ function EnhanceScreen({
   return (
     <>
       <Panel>
-        <CardHead title={t("Codex增强")} detail={t("会话删除、导出、项目移动和用户脚本等界面能力")} />
+        <CardHead title={t("GPT Work增强")} detail={t("会话删除、导出、项目移动和用户脚本等界面能力")} />
         <CardContent>
           <label className="switch-row">
             <input
@@ -2232,7 +2232,7 @@ function EnhanceScreen({
               <FeatureToggle title="Stepwise" detail={t("在 Codex 页面显示可拖动的后续建议浮层；建议由单独配置的 Stepwise API 生成。")} checked={form.codexAppStepwiseEnabled} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppStepwiseEnabled", value)} />
               <FeatureToggle title={t("Stepwise 直接发送")} detail={t("点击建议后自动发送；关闭时只填入输入框。")} checked={form.codexAppStepwiseDirectSend} disabled={!masterEnabled || !form.codexAppStepwiseEnabled} onChange={(value) => setEnhanceFlag("codexAppStepwiseDirectSend", value)} />
             </FeatureGroup>
-            <FeatureGroup title={t("界面与启动")} detail={t("控制语言、启动速度和 Codex 原生界面调整。")}>
+            <FeatureGroup title={t("界面与启动")} detail={t("控制语言、启动速度和 GPT Work 原生界面调整。")}>
               <FeatureToggle title={t("强制中文界面")} detail={t("强制启用 GPT Work 内置 zh-CN 语言包，避免 Statsig/VPN 不通时回退英文。需重启 Codex 才能完整生效。")} checked={form.codexAppForceChineseLocale} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppForceChineseLocale", value)} />
               <FeatureToggle title={t("快速启动")} detail={t("默认关闭；无 VPN 时可开启，让 Statsig 初始化快速失败，减少启动时长。需重启 Codex 才生效。")} checked={form.codexAppFastStartup} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppFastStartup", value)} />
               <FeatureToggle title={t("原生菜单栏位置")} detail={t("把 Codex++ 菜单插入 Codex 顶部原生菜单栏。")} checked={form.codexAppNativeMenuPlacement} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppNativeMenuPlacement", value)} />
@@ -2356,7 +2356,7 @@ function ZedRemoteScreen({
       </Panel>
       <ZedRemoteProjectSection title="Current" projects={currentProjects} actions={actions} onCopyUrl={copyUrl} />
       <ZedRemoteProjectSection title="Recent" projects={recentProjects} actions={actions} onCopyUrl={copyUrl} />
-      <ZedRemoteProjectSection title="Discovered from Codex" projects={discoveredProjects} actions={actions} onCopyUrl={copyUrl} />
+      <ZedRemoteProjectSection title="Discovered from GPT Work" projects={discoveredProjects} actions={actions} onCopyUrl={copyUrl} />
     </>
   );
 }
@@ -2552,7 +2552,7 @@ function SessionsScreen({
   return (
     <>
       <Panel>
-        <CardHead title={t("会话管理")} detail={t("读取 Codex 本地 SQLite 会话库，会删除数据库记录和对应 rollout 文件")} />
+        <CardHead title={t("会话管理")} detail={t("读取 GPT Work 本地 SQLite 会话库，会删除数据库记录和对应 rollout 文件")} />
         <CardContent>
           <div className="metric-list">
             <Metric label={t("会话总数")} value={tf("{0} 个", [items.length])} />
@@ -2712,10 +2712,10 @@ function MaintenanceScreen({
   return (
     <>
       <Panel>
-        <CardHead title={t("检查与修复")} detail={t("检查入口、Codex 应用和 Watcher 状态")} />
+        <CardHead title={t("检查与修复")} detail={t("检查入口、GPT Work 应用和 Watcher 状态")} />
         <CardContent>
           <div className="status-table">
-            <StatusRow title={t("Codex 应用")} status={overview?.codex_app.status} path={overview?.codex_app.path} />
+            <StatusRow title={t("GPT Work 应用")} status={overview?.codex_app.status} path={overview?.codex_app.path} />
             <StatusRow title={t("静默启动入口")} status={overview?.silent_shortcut.status} path={overview?.silent_shortcut.path} />
             <StatusRow title={t("管理控制台入口")} status={overview?.management_shortcut.status} path={overview?.management_shortcut.path} />
             <StatusRow title={t("Watcher 自动接管")} status={watcher?.enabled ? "ok" : "disabled"} path={watcher?.disabled_flag} />
@@ -2752,7 +2752,7 @@ function MaintenanceScreen({
         </CardContent>
       </Panel>
       <Panel>
-        <CardHead title={t("Codex 应用路径")} detail={t("免安装版或解包版只需要选择一次，之后静默启动会自动复用")} />
+        <CardHead title={t("GPT Work 应用路径")} detail={t("免安装版或解包版只需要选择一次，之后静默启动会自动复用")} />
         <CardContent>
           <div className="status-table">
             <StatusRow title={t("保存路径")} status={savedCodexAppPath ? "ok" : "not_checked"} path={savedCodexAppPath || null} />
@@ -2825,8 +2825,8 @@ function AboutScreen({
         <CardHead title={t("关于 Codex++")} detail={t("本地 Codex 增强、管理工具和安装包维护")} />
         <CardContent>
           <div className="metric-list">
-            <Metric label={t("Codex++ 版本")} value={overview?.current_version ?? update?.currentVersion ?? "-"} />
-            <Metric label={t("Codex 版本")} value={overview?.codex_version ?? t("未检测到")} />
+            <Metric label={t("GPT Work++ 版本")} value={overview?.current_version ?? update?.currentVersion ?? "-"} />
+            <Metric label={t("GPT Work 版本")} value={overview?.codex_version ?? t("未检测到")} />
             <Metric label={t("项目地址")} value="github.com/BigPizzaV3/CodexPlusPlus" />
           </div>
           <Toolbar>
@@ -2851,7 +2851,7 @@ function AboutScreen({
       </Panel>
       <Panel>
       <Panel>
-        <CardHead title={t("Codex 启动参数")} detail={t("启动 GPT Work 时追加到默认 CDP 参数后。留空则保持默认启动行为。")} />
+        <CardHead title={t("GPT Work 启动参数")} detail={t("启动 GPT Work 时追加到默认 CDP 参数后。留空则保持默认启动行为。")} />
         <CardContent>
           <Field label={t("额外参数")}>
             <Textarea
@@ -3252,7 +3252,7 @@ function ContextScreen({
 }) {
   return (
     <Panel fill>
-      <CardHead title={t("Codex 工具与插件")} detail={t("独立管理 Codex 的 MCP、Skills、Plugins；切换任意供应商都会带上。")} />
+      <CardHead title={t("GPT Work 工具与插件")} detail={t("独立管理 GPT Work 的 MCP、Skills、Plugins；切换任意供应商都会带上。")} />
       <CardContent>
         <RelayContextManager
           form={normalizeSettings(form)}
@@ -3383,10 +3383,10 @@ function RelayProfileEditor({
             placeholder={t("例如 deepseek-v4-pro")}
           />
           <p className="field-hint">
-            {t("默认启动 Codex 时使用的模型名，请勿带后缀；上下文窗口请在下方「模型列表」中按模型单独配置。")}
+            {t("默认启动 GPT Work 时使用的模型名，请勿带后缀；上下文窗口请在下方「模型列表」中按模型单独配置。")}
           </p>
         </Field>
-        <Field className="relay-field-goals" label={t("Codex 目标")}>
+        <Field className="relay-field-goals" label={t("GPT Work 目标")}>
           <label className="inline-check">
             <input
               checked={configHasCodexGoalsFeature(profile.configContents)}
@@ -3791,7 +3791,7 @@ function RelayContextManager({
     <div className="relay-context-panel">
       <div className="relay-context-head">
         <div>
-          <strong>{t("Codex 工具与插件")}</strong>
+          <strong>{t("GPT Work 工具与插件")}</strong>
           <span>{t("MCP、Skills、Plugins 作为全局配置独立管理，切换任意供应商都会合并。")}</span>
         </div>
         <div className="relay-context-head-actions">
@@ -4536,10 +4536,10 @@ function routeSubtitle(route: Route) {
   const subtitles: Record<Route, string> = {
     overview: t("检查问题、启动与快速修复"),
     relay: t("管理 API 供应商、协议、Key 与配置文件"),
-    sessions: t("查看、删除和修复 Codex 本地会话"),
+    sessions: t("查看、删除和修复 GPT Work 本地会话"),
     context: t("独立管理 MCP、Skills、Plugins"),
     enhance: t("会话删除、导出、项目移动和脚本能力"),
-    zedRemote: t("管理 Codex SSH 项目并加入 Zed workspace"),
+    zedRemote: t("管理 GPT Work SSH 项目并加入 Zed workspace"),
     userScripts: t("内置和用户自定义脚本清单"),
     maintenance: t("入口安装、修复、Watcher 与手动启动"),
     about: t("版本信息、项目链接、日志与诊断"),
@@ -5189,7 +5189,7 @@ function truncateSessionDeletePreview(value: string) {
 function healthItems(overview: OverviewResult | null) {
   return [
     {
-      title: t("Codex 应用"),
+      title: t("GPT Work 应用"),
       status: overview?.codex_app.status ?? "not_checked",
       ok: overview?.codex_app.status === "found",
       detail: overview?.codex_app.path || t("尚未检查 Codex 应用路径。"),
@@ -5383,7 +5383,7 @@ function ccsProviderSummary(result: CcsProvidersResult | null): string {
   if (!result) return t("读取 ~/.cc-switch/cc-switch.db");
   if (!isSuccessStatus(result.status)) return result.message || t("读取 cc-switch 供应商失败。");
   const count = result.providers.length;
-  return count ? tf("发现 {0} 个 Codex 供应商", [count]) : t("未发现可导入供应商");
+  return count ? tf("发现 {0} 个 GPT Work 供应商", [count]) : t("未发现可导入供应商");
 }
 
 function normalizeRelayMode(mode: RelayMode | undefined): RelayMode {
@@ -6211,7 +6211,7 @@ function zedRemoteHostLabel(project: ZedRemoteProject) {
 
 function zedRemoteSourceLabel(source: string) {
   if (source === "currentThread") return t("当前会话");
-  if (source === "codexRemoteProject") return "Codex remote project";
+  if (source === "codexRemoteProject") return "GPT Work remote project";
   if (source === "threadWorkspaceHint") return "Thread workspace hint";
   if (source === "sqliteThreadCwd") return "SQLite cwd";
   if (source === "recent") return t("最近打开");

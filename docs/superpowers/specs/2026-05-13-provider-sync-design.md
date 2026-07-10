@@ -2,29 +2,29 @@
 
 ## Goal
 
-Add an optional Codex++ startup sync that keeps existing Codex conversations visible after the user changes `model_provider`.
+Add an optional GPT Work++ startup sync that keeps existing GPT Work conversations visible after the user changes `model_provider`.
 
 ## User experience
 
-Codex++ settings gains a `Provider 同步` toggle. The toggle is off by default.
+GPT Work++ settings gains a `Provider 同步` toggle. The toggle is off by default.
 
-When the toggle is off, Codex++ launch behavior is unchanged.
+When the toggle is off, GPT Work++ launch behavior is unchanged.
 
-When the toggle is on, Codex++ runs provider sync before launching Codex. The sync targets the current root `model_provider` from `~/.codex/config.toml`; it does not switch providers or edit `config.toml`.
+When the toggle is on, GPT Work++ runs provider sync before launching GPT Work. The sync targets the current root `model_provider` from `~/.codex/config.toml`; it does not switch providers or edit `config.toml`.
 
-If sync is skipped because another sync is locked, SQLite is busy, or session files are in use, Codex++ writes the reason to `~/.codex-session-delete/launcher.log` and continues launching Codex. If sync starts writing and then cannot safely restore or finish, launch fails and the error is written to the launcher log.
+If sync is skipped because another sync is locked, SQLite is busy, or session files are in use, GPT Work++ writes the reason to `~/.codex-session-delete/launcher.log` and continues launching GPT Work. If sync starts writing and then cannot safely restore or finish, launch fails and the error is written to the launcher log.
 
 ## Architecture
 
-Implement the feature inside Codex++ as Python code. Do not depend on the external Node.js CLI from `Dailin521/codex-provider-sync`, because Codex++ should not require Node 24 or a separate global package.
+Implement the feature inside GPT Work++ as Python code. Do not depend on the external Node.js CLI from `Dailin521/codex-provider-sync`, because GPT Work++ should not require Node 24 or a separate global package.
 
 Add three focused areas:
 
-- `codex_session_delete/settings_store.py` stores backend-readable Codex++ settings in `~/.codex-session-delete/settings.json`.
+- `codex_session_delete/settings_store.py` stores backend-readable GPT Work++ settings in `~/.codex-session-delete/settings.json`.
 - `codex_session_delete/provider_sync.py` ports the needed provider sync behavior to Python.
 - Existing launcher and bridge code call the sync and expose settings to the injected menu.
 
-The renderer menu still uses existing visual patterns, but the new setting is backend-backed rather than only `localStorage`, because startup sync must be readable before Codex launches.
+The renderer menu still uses existing visual patterns, but the new setting is backend-backed rather than only `localStorage`, because startup sync must be readable before GPT Work launches.
 
 ## Settings storage
 
@@ -34,7 +34,7 @@ Store backend settings at:
 ~/.codex-session-delete/settings.json
 ```
 
-Initial content is implicit; if the file is missing or malformed, Codex++ uses defaults:
+Initial content is implicit; if the file is missing or malformed, GPT Work++ uses defaults:
 
 ```json
 {
@@ -51,7 +51,7 @@ Expose bridge endpoints:
 
 ## Startup flow
 
-`launch_and_inject()` resolves the Codex app directory and ports as it does today. Before `launch_codex_app()`, it loads backend settings. If `providerSyncEnabled` is true, it runs provider sync against the default Codex home `~/.codex`.
+`launch_and_inject()` resolves the GPT Work app directory and ports as it does today. Before `launch_codex_app()`, it loads backend settings. If `providerSyncEnabled` is true, it runs provider sync against the default GPT Work home `~/.codex`.
 
 The watcher uses the same launcher path, so watcher-triggered launches also honor the setting.
 
@@ -110,7 +110,7 @@ Fatal conditions stop launch:
 
 - Backup creation fails after sync has decided it needs to write.
 - A write starts and then fails, and rollback/restore also fails.
-- The Codex home exists but state files are malformed in a way that prevents safe updates.
+- The GPT Work home exists but state files are malformed in a way that prevents safe updates.
 
 ## Testing
 
@@ -119,7 +119,7 @@ Automated tests should cover:
 - Backend settings default to `providerSyncEnabled = false`.
 - Backend settings are saved and reloaded from `~/.codex-session-delete/settings.json`.
 - Bridge endpoints read and write `providerSyncEnabled`.
-- Launcher calls provider sync before launching Codex only when the setting is enabled.
+- Launcher calls provider sync before launching GPT Work only when the setting is enabled.
 - Lock-existing sync result is skipped and does not block launch.
 - Rollout first-line metadata is updated to the current config provider.
 - SQLite `threads.model_provider` is updated to the current config provider.
@@ -127,9 +127,9 @@ Automated tests should cover:
 
 Manual verification should cover:
 
-1. Turn on `Provider 同步` in the Codex++ menu.
-2. Close Codex.
+1. Turn on `Provider 同步` in the GPT Work++ menu.
+2. Close GPT Work.
 3. Change `model_provider` in `~/.codex/config.toml`.
-4. Launch Codex++.
-5. Confirm older conversations remain visible in Codex Desktop and `/resume`.
-6. Confirm lock-existing behavior still launches Codex and writes a launcher log entry.
+4. Launch GPT Work++.
+5. Confirm older conversations remain visible in GPT Work Desktop and `/resume`.
+6. Confirm lock-existing behavior still launches GPT Work and writes a launcher log entry.

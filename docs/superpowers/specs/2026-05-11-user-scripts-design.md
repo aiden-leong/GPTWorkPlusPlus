@@ -2,24 +2,24 @@
 
 ## Goal
 
-Add a Codex++ user script system so users can extend the injected renderer behavior with their own JavaScript files without modifying the project source.
+Add a GPT Work++ user script system so users can extend the injected renderer behavior with their own JavaScript files without modifying the project source.
 
 ## Architecture
 
-Codex++ keeps local file access in Python and browser execution in the existing CDP-injected renderer. Python scans two script directories, stores enablement configuration in the user config directory, injects enabled scripts through CDP, and exposes script inventory/actions through the existing bridge. The renderer only displays the script manager UI and sends configuration/reload requests.
+GPT Work++ keeps local file access in Python and browser execution in the existing CDP-injected renderer. Python scans two script directories, stores enablement configuration in the user config directory, injects enabled scripts through CDP, and exposes script inventory/actions through the existing bridge. The renderer only displays the script manager UI and sends configuration/reload requests.
 
 ## Script locations
 
 - Built-in scripts directory: `codex_session_delete/user_scripts/`
-- User scripts directory: platform user config directory plus `Codex++/user_scripts/`
-  - Windows: `%APPDATA%/Codex++/user_scripts/`
-  - Non-Windows: existing user config home pattern plus `Codex++/user_scripts/`
+- User scripts directory: platform user config directory plus `GPT Work++/user_scripts/`
+  - Windows: `%APPDATA%/GPT Work++/user_scripts/`
+  - Non-Windows: existing user config home pattern plus `GPT Work++/user_scripts/`
 
 The user directory is created automatically. Missing built-in directory is treated as empty. Only top-level `*.js` files are loaded in the first version.
 
 ## Configuration
 
-Script settings are persisted as JSON in the user config directory, e.g. `%APPDATA%/Codex++/user_scripts.json`:
+Script settings are persisted as JSON in the user config directory, e.g. `%APPDATA%/GPT Work++/user_scripts.json`:
 
 ```json
 {
@@ -41,7 +41,7 @@ Reloading scripts from the menu rescans directories and reinjects currently enab
 
 ## Renderer UI
 
-The Codex++ modal gains a “用户脚本” section:
+The GPT Work++ modal gains a “用户脚本” section:
 
 - Global switch: “启用用户脚本”
 - Directory hints for built-in and user script directories
@@ -62,7 +62,7 @@ Add routes handled by Python:
 
 ## Script author contract
 
-A user script is a normal JavaScript file executed in the Codex renderer page context. Scripts should be idempotent if they may be reloaded:
+A user script is a normal JavaScript file executed in the GPT Work renderer page context. Scripts should be idempotent if they may be reloaded:
 
 ```js
 if (window.__myScriptInstalled) return;

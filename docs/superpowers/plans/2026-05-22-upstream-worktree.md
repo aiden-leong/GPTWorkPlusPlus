@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a Codex++ enhancement that creates new Git worktrees from a fresh remote tracking ref such as `upstream/main` instead of stale local `HEAD`.
+**Goal:** Add a GPT Work++ enhancement that creates new Git worktrees from a fresh remote tracking ref such as `upstream/main` instead of stale local `HEAD`.
 
 **Architecture:** Add a focused Rust `upstream_worktree` module in `codex-plus-core`, expose it through existing bridge routes, wire the launcher runtime to those routes, then add a guarded renderer menu workflow. The backend uses argument-array Git commands and an explicit fetch refspec so the created worktree is equivalent to `git worktree add -b <branch> <path> upstream/<base>` with a freshly updated `upstream/<base>` ref.
 
@@ -939,7 +939,7 @@ git commit -m "feat(worktree): expose upstream worktree bridge routes"
 
 ---
 
-### Task 4: Add Codex++ menu workflow
+### Task 4: Add GPT Work++ menu workflow
 
 **Files:**
 - Modify: `assets/inject/renderer-inject.js`
@@ -1158,7 +1158,7 @@ git commit -m "feat(worktree): add upstream worktree menu workflow"
 
 ---
 
-### Task 5: Add guarded native Codex worktree adapter
+### Task 5: Add guarded native GPT Work worktree adapter
 
 **Files:**
 - Modify: `assets/inject/renderer-inject.js`
@@ -1194,7 +1194,7 @@ Add these functions near the upstream worktree modal helpers:
     if (!trigger) return false;
     const payload = upstreamWorktreeNativePayloadFromElement(trigger);
     if (!payload) {
-      showToast("无法安全识别 Codex 原生 worktree 表单，请使用 Codex++ 菜单创建。", null);
+      showToast("无法安全识别 GPT Work 原生 worktree 表单，请使用 GPT Work++ 菜单创建。", null);
       return false;
     }
     event.preventDefault();
@@ -1243,7 +1243,7 @@ Run:
 
 ```bash
 git add "assets/inject/renderer-inject.js"
-git commit -m "feat(worktree): guard native Codex worktree creation"
+git commit -m "feat(worktree): guard native GPT Work worktree creation"
 ```
 
 ---
@@ -1265,15 +1265,15 @@ In `README.md`, add this bullet under `主要功能` near the existing Zed Remot
 Add this FAQ section near the Git/Zed or enhancement FAQ sections:
 
 ```markdown
-### Upstream worktree 和 Codex 原生创建有什么区别
+### Upstream worktree 和 GPT Work 原生创建有什么区别
 
-Codex++ 的 Upstream worktree 功能等价于先更新远端分支，再执行：
+GPT Work++ 的 Upstream worktree 功能等价于先更新远端分支，再执行：
 
 ```bash
 git worktree add -b <new-branch> <worktree-path> upstream/<base-branch>
 ```
 
-这样新 worktree 从最新的远端跟踪分支开始，而不是从当前会话所在的本地 HEAD 开始。如果 Codex++ 无法安全识别当前 Codex 版本的原生 worktree 创建表单，请从 Codex++ 菜单中手动填写仓库路径、分支名、worktree 路径、remote 和 base branch。
+这样新 worktree 从最新的远端跟踪分支开始，而不是从当前会话所在的本地 HEAD 开始。如果 GPT Work++ 无法安全识别当前 GPT Work 版本的原生 worktree 创建表单，请从 GPT Work++ 菜单中手动填写仓库路径、分支名、worktree 路径、remote 和 base branch。
 ```
 
 - [ ] **Step 2: Update English README feature bullet**
@@ -1287,15 +1287,15 @@ In `README_EN.md`, add this bullet under the main feature list near the Zed Remo
 Add this FAQ section near the enhancement FAQ sections:
 
 ```markdown
-### How is Upstream worktree different from Codex native creation?
+### How is Upstream worktree different from GPT Work native creation?
 
-Codex++ updates the remote branch first, then creates the worktree as if you ran:
+GPT Work++ updates the remote branch first, then creates the worktree as if you ran:
 
 ```bash
 git worktree add -b <new-branch> <worktree-path> upstream/<base-branch>
 ```
 
-The new worktree starts from the fresh remote tracking branch instead of the local HEAD used by the current session. If Codex++ cannot safely recognize the current Codex version's native worktree form, use the Codex++ menu entry and enter the repository path, branch name, worktree path, remote, and base branch manually.
+The new worktree starts from the fresh remote tracking branch instead of the local HEAD used by the current session. If GPT Work++ cannot safely recognize the current GPT Work version's native worktree form, use the GPT Work++ menu entry and enter the repository path, branch name, worktree path, remote, and base branch manually.
 ```
 
 - [ ] **Step 3: Run deterministic validation**
@@ -1344,7 +1344,7 @@ git -C "$TMPDIR/seed" commit -m "remote update"
 git -C "$TMPDIR/seed" push upstream main
 ```
 
-Then launch Codex++ from the built app or development launcher, open the Codex++ menu, create:
+Then launch GPT Work++ from the built app or development launcher, open the GPT Work++ menu, create:
 
 ```text
 Repository path: $TMPDIR/repo

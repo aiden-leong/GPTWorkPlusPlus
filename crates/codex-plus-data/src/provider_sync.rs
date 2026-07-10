@@ -130,7 +130,7 @@ pub fn run_provider_sync_with_target(
     if !home.exists() {
         return result(
             ProviderSyncStatus::Skipped,
-            format!("Codex home not found: {}", home.to_string_lossy()),
+            format!("GPT Work home not found: {}", home.to_string_lossy()),
             DEFAULT_PROVIDER,
             None,
             0,

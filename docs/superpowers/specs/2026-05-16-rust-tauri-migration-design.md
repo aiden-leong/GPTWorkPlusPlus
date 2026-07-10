@@ -1,13 +1,13 @@
-# Codex++ Rust/Tauri Migration Design
+# GPT Work++ Rust/Tauri Migration Design
 
 ## Summary
 
-Codex++ will fully replace the current Python backend with Rust and add a Tauri management console. The existing GPT Work enhancement model remains: Codex++ launches Codex with CDP flags, injects a bridge plus `renderer-inject.js`, and handles local operations such as delete, undo, export, move, settings, status, provider sync, and user scripts.
+GPT Work++ will fully replace the current Python backend with Rust and add a Tauri management console. The existing GPT Work enhancement model remains: GPT Work++ launches GPT Work with CDP flags, injects a bridge plus `renderer-inject.js`, and handles local operations such as delete, undo, export, move, settings, status, provider sync, and user scripts.
 
 The final user experience has two desktop entry points:
 
-- **Codex++**: a no-window silent launcher. Double-clicking it starts enhanced Codex directly.
-- **Codex++ 管理工具**: a visible Tauri management app for install, uninstall, update, settings, logs, diagnostics, shortcut repair, and optional manual launch.
+- **GPT Work++**: a no-window silent launcher. Double-clicking it starts enhanced GPT Work directly.
+- **GPT Work++ 管理工具**: a visible Tauri management app for install, uninstall, update, settings, logs, diagnostics, shortcut repair, and optional manual launch.
 
 There is no separate user-facing CLI. Launch behavior belongs to the silent launcher, and management features belong to the Tauri console.
 
@@ -22,19 +22,19 @@ There is no separate user-facing CLI. Launch behavior belongs to the silent laun
 
 ## Non-Goals
 
-- Replacing `renderer-inject.js` with a full Tauri-native Codex UI.
+- Replacing `renderer-inject.js` with a full Tauri-native GPT Work UI.
 - Moving session management into the Tauri app as a standalone conversation browser.
 - Providing a separate user-facing CLI.
-- Requiring the management tool to stay open while Codex++ is running.
+- Requiring the management tool to stay open while GPT Work++ is running.
 
 ## Architecture
 
 The Rust project will be organized as a workspace:
 
 - `codex-plus-core`
-  - Codex app path resolution.
+  - GPT Work app path resolution.
   - Loopback port selection.
-  - Codex process launch and lifecycle handling.
+  - GPT Work process launch and lifecycle handling.
   - CDP target discovery, websocket communication, bridge installation, script injection, and DevTools opening.
   - Bridge request routing for injected UI calls.
   - Settings, logs, assets, status, and diagnostics primitives.
@@ -49,7 +49,7 @@ The Rust project will be organized as a workspace:
 - `codex-plus-launcher`
   - No-window silent launcher binary.
   - Supports internal launch configuration such as app path, database path, backup path, debug port, and helper port.
-  - Used by the `Codex++` desktop entry point.
+  - Used by the `GPT Work++` desktop entry point.
 
 - `codex-plus-tauri`
   - Visible management console.
@@ -57,34 +57,34 @@ The Rust project will be organized as a workspace:
   - Provides install, uninstall, update, settings, logs, diagnostics, shortcut repair, and optional manual launch controls.
 
 - `renderer-inject.js`
-  - Remains the injected Codex renderer enhancement script.
+  - Remains the injected GPT Work renderer enhancement script.
   - Receives helper/bridge configuration from Rust during injection.
   - Keeps the current GPT Work in-place enhancements: menu, delete, undo, export, move, settings panel, timeline, plugin unlocks, user scripts, and ads/sponsor assets.
 
 ## Entry Points
 
-### Codex++
+### GPT Work++
 
-The `Codex++` desktop entry point is silent:
+The `GPT Work++` desktop entry point is silent:
 
 1. It starts the no-window Rust launcher.
 2. It does not show a Tauri management window.
 3. It launches GPT Work with CDP flags.
 4. It starts the local Rust bridge/helper runtime.
 5. It injects `renderer-inject.js`.
-6. It stays alive until Codex exits.
+6. It stays alive until GPT Work exits.
 
-### Codex++ 管理工具
+### GPT Work++ 管理工具
 
 The management tool opens a Tauri window and owns management workflows:
 
-- Install and uninstall Codex++ entry points.
+- Install and uninstall GPT Work++ entry points.
 - Check for updates and perform updates.
 - Edit backend settings.
 - View latest launch status.
 - Open logs and copy diagnostics.
-- Repair or recreate the silent `Codex++` shortcut.
-- Optionally launch or repair a running Codex++ session.
+- Repair or recreate the silent `GPT Work++` shortcut.
+- Optionally launch or repair a running GPT Work++ session.
 
 The management tool is not required during normal use.
 
@@ -92,18 +92,18 @@ The management tool is not required during normal use.
 
 Silent launch flow:
 
-1. User double-clicks `Codex++`.
+1. User double-clicks `GPT Work++`.
 2. The no-window Rust launcher starts without a visible management UI.
 3. Rust chooses available loopback ports for CDP and helper/bridge runtime.
-4. If Provider Sync is enabled, Rust updates local Codex metadata before launch.
-5. Rust launches Codex with:
+4. If Provider Sync is enabled, Rust updates local GPT Work metadata before launch.
+5. Rust launches GPT Work with:
    - `--remote-debugging-port=<debug_port>`
    - `--remote-allow-origins=http://127.0.0.1:<debug_port>`
 6. Rust starts the helper/bridge runtime.
-7. Rust discovers the Codex page target through CDP.
+7. Rust discovers the GPT Work page target through CDP.
 8. Rust installs `Runtime.addBinding`, injects the bridge script, and injects `renderer-inject.js`.
 9. Rust evaluates enabled user scripts.
-10. Runtime stays alive until Codex exits, then shuts down helper resources.
+10. Runtime stays alive until GPT Work exits, then shuts down helper resources.
 
 Bridge request flow:
 
@@ -116,7 +116,7 @@ Bridge request flow:
 
 Management tool flow:
 
-1. User opens `Codex++ 管理工具`.
+1. User opens `GPT Work++ 管理工具`.
 2. Tauri UI calls Rust commands.
 3. Commands call shared core/data modules.
 4. UI displays results for install, update, settings, logs, diagnostics, repair, and launch actions.
@@ -137,11 +137,11 @@ Failure recording:
 - Write human-readable launch logs.
 - Write a latest structured status file for the management tool.
 - Include error codes or categories where useful, such as app-not-found, port-unavailable, cdp-target-not-found, injection-failed, sqlite-error, update-error, and shortcut-error.
-- Keep operation-level failures visible in the injected Codex UI where the action occurred.
+- Keep operation-level failures visible in the injected GPT Work UI where the action occurred.
 
 Management diagnostics:
 
-- Show Codex app detection status.
+- Show GPT Work app detection status.
 - Show whether shortcuts are installed.
 - Show latest launch result and timestamp.
 - Show debug/helper ports used by the latest run.
@@ -152,20 +152,20 @@ Management diagnostics:
 
 Windows install creates two desktop shortcuts:
 
-- `Codex++.lnk`: silent launcher, no management window.
-- `Codex++ 管理工具.lnk`: opens the Tauri management console.
+- `GPT Work++.lnk`: silent launcher, no management window.
+- `GPT Work++ 管理工具.lnk`: opens the Tauri management console.
 
 Windows packaging uses separate entry binaries so window behavior is predictable:
 
-- `codex-plus-plus.exe`: no-window silent launcher for the `Codex++` shortcut.
-- `codex-plus-plus-manager.exe`: Tauri management console for `Codex++ 管理工具`.
+- `codex-plus-plus.exe`: no-window silent launcher for the `GPT Work++` shortcut.
+- `codex-plus-plus-manager.exe`: Tauri management console for `GPT Work++ 管理工具`.
 
-Windows uninstall removes both shortcuts and the uninstall registry entry. Optional data removal deletes Codex++-owned data such as logs, settings, and backups.
+Windows uninstall removes both shortcuts and the uninstall registry entry. Optional data removal deletes GPT Work++-owned data such as logs, settings, and backups.
 
 macOS install provides equivalent two-entry behavior with two app bundles:
 
-- `Codex++.app`: silent launch wrapper.
-- `Codex++ 管理工具.app`: visible management console.
+- `GPT Work++.app`: silent launch wrapper.
+- `GPT Work++ 管理工具.app`: visible management console.
 
 Updates are initiated from the management console. No separate command-line update entry point is provided.
 
@@ -174,11 +174,11 @@ Updates are initiated from the management console. No separate command-line upda
 The Tauri management console uses a workbench layout rather than a marketing page:
 
 - Left navigation: Overview, Launch, Install, Update, Settings, Logs, Diagnostics.
-- Overview: shortcut status, Codex app detection, latest launch result, current version, update status, and quick actions.
+- Overview: shortcut status, GPT Work app detection, latest launch result, current version, update status, and quick actions.
 - Launch: manual launch button, app path override, debug/helper port settings, and repair backend action.
 - Install: install, uninstall, repair shortcuts, and optional remove owned data.
 - Update: check update, release summary, download/install progress, and restart guidance.
-- Settings: provider sync, Codex command wrapper settings, proxy-related environment summary, and user script enablement.
+- Settings: provider sync, GPT Work command wrapper settings, proxy-related environment summary, and user script enablement.
 - Logs: latest launcher/helper logs with copy/open controls.
 - Diagnostics: bundled report for issue reporting, including paths, version, OS, shortcuts, ports, settings location, and latest status.
 

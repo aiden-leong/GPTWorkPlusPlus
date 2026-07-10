@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make upstream-based worktree creation feel native in GPT Work by adding `upstream/*` choices to the start-new-chat branch dropdown instead of exposing a separate Codex++ worktree dialog.
+Make upstream-based worktree creation feel native in GPT Work by adding `upstream/*` choices to the start-new-chat branch dropdown instead of exposing a separate GPT Work++ worktree dialog.
 
 ## User Experience
 
@@ -11,13 +11,13 @@ On the start-new-chat screen, the bottom controls already separate two decisions
 - `New worktree` decides that the next chat should run in a new worktree.
 - The branch dropdown decides which branch or ref the worktree should start from.
 
-Codex++ should extend the branch dropdown with an `Upstream` group. For a repository on `main`, the user should be able to pick `upstream/main` from the same branch menu shown in the screenshot. After that, the existing `New worktree` flow should create the worktree from the selected upstream tracking ref.
+GPT Work++ should extend the branch dropdown with an `Upstream` group. For a repository on `main`, the user should be able to pick `upstream/main` from the same branch menu shown in the screenshot. After that, the existing `New worktree` flow should create the worktree from the selected upstream tracking ref.
 
-The user should not need to open a Codex++ modal or manually enter repo path, branch name, worktree path, remote, or base branch.
+The user should not need to open a GPT Work++ modal or manually enter repo path, branch name, worktree path, remote, or base branch.
 
 ## Design
 
-Codex++ keeps the existing backend bridge and upstream worktree creation core, then adds a renderer-side adapter for the native branch selector.
+GPT Work++ keeps the existing backend bridge and upstream worktree creation core, then adds a renderer-side adapter for the native branch selector.
 
 The adapter has three responsibilities:
 
@@ -54,19 +54,19 @@ The create route continues to receive `repoPath`, `branchName`, `worktreePath`, 
 
 The renderer adapter should be conservative:
 
-- It only mutates open menus that look like Codex branch dropdown menus.
+- It only mutates open menus that look like GPT Work branch dropdown menus.
 - It adds identifiable `data-codex-upstream-branch-option` nodes so repeated scans do not duplicate options.
 - It does not remove or rename native local branch options.
 - It does not block the native flow unless a complete upstream selection and create payload are available.
-- If Codex DOM changes and the adapter cannot safely detect the native menu, it should leave Codex behavior unchanged.
+- If GPT Work DOM changes and the adapter cannot safely detect the native menu, it should leave GPT Work behavior unchanged.
 
-Selecting an upstream item should visibly update the branch dropdown label to `upstream/main` when possible. If Codex re-renders and overwrites that label, the selected state still remains in Codex++ runtime until the user changes project/branch or the page reloads.
+Selecting an upstream item should visibly update the branch dropdown label to `upstream/main` when possible. If GPT Work re-renders and overwrites that label, the selected state still remains in GPT Work++ runtime until the user changes project/branch or the page reloads.
 
 ## Error Handling
 
 If `upstream` is missing, show no injected upstream option or show a disabled explanatory option. Creating from an upstream selection should fail with the existing backend error message if fetch or worktree creation fails.
 
-If Codex++ cannot derive the native new-branch/worktree payload, it should not create a worktree and should show a short toast explaining that the current Codex version's native worktree form could not be recognized.
+If GPT Work++ cannot derive the native new-branch/worktree payload, it should not create a worktree and should show a short toast explaining that the current GPT Work version's native worktree form could not be recognized.
 
 ## Tests
 
@@ -86,4 +86,4 @@ Run these checks:
 
 ## Out of Scope
 
-This change will not patch GPT Work's bundled source, will not require users to type worktree paths manually, and will not replace the full native branch picker implementation. It only injects remote branch choices and routes upstream selections through the Codex++ bridge.
+This change will not patch GPT Work's bundled source, will not require users to type worktree paths manually, and will not replace the full native branch picker implementation. It only injects remote branch choices and routes upstream selections through the GPT Work++ bridge.

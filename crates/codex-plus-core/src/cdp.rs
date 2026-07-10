@@ -86,7 +86,7 @@ pub fn pick_injectable_codex_page_target(targets: &[CdpTarget]) -> anyhow::Resul
         }
     }
 
-    bail!("No injectable Codex page target found")
+    bail!("No injectable GPT Work page target found")
 }
 
 pub fn is_injectable_page_target(target: &CdpTarget) -> bool {

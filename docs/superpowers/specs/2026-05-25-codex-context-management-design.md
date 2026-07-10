@@ -1,16 +1,16 @@
-# Codex Context Management Design
+# GPT Work Context Management Design
 
 ## Goal
 
-Add Codex-only management for MCP servers, skills, and plugins, using the same switching concept as CCSwitch while staying inside Codex++'s current settings and relay profile model.
+Add GPT Work-only management for MCP servers, skills, and plugins, using the same switching concept as CCSwitch while staying inside GPT Work++'s current settings and relay profile model.
 
-This feature manages shared Codex context entries from the existing `relayCommonConfigContents` TOML snippet and lets each supplier profile choose which entries are active when that supplier is switched on.
+This feature manages shared GPT Work context entries from the existing `relayCommonConfigContents` TOML snippet and lets each supplier profile choose which entries are active when that supplier is switched on.
 
 ## Scope
 
 In scope:
 
-- Manage Codex `config.toml` context sections:
+- Manage GPT Work `config.toml` context sections:
   - `[mcp_servers.*]`
   - `[skills.*]`
   - `[plugins.*]`
@@ -28,7 +28,7 @@ Out of scope:
 - Cross-application management for Claude, Gemini, OpenCode, Hermes, or Claude Desktop.
 - CCSwitch database migration or database-backed MCP/skill/plugin registries.
 - Installing skills/plugins from remote repositories.
-- Runtime validation that Codex actually honors context-size settings in every Codex version.
+- Runtime validation that GPT Work actually honors context-size settings in every GPT Work version.
 
 ## Data Model
 
@@ -97,7 +97,7 @@ When adding a new supplier:
 
 ## Backend Commands
 
-Add Tauri commands that operate on settings rather than directly mutating live Codex files:
+Add Tauri commands that operate on settings rather than directly mutating live GPT Work files:
 
 - list context entries from a provided settings object or current saved settings
 - upsert context entry
@@ -149,4 +149,4 @@ Frontend checks:
 
 ## Open Decisions
 
-None. This design intentionally keeps the first implementation Codex-only and TOML-backed, with raw TOML still available for advanced cases.
+None. This design intentionally keeps the first implementation GPT Work-only and TOML-backed, with raw TOML still available for advanced cases.

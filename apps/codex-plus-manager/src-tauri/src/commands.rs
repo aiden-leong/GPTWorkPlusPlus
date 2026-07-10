@@ -413,7 +413,7 @@ pub fn launch_codex_plus(request: LaunchRequest) -> CommandResult<Value> {
 pub fn restart_codex_plus(request: LaunchRequest) -> CommandResult<Value> {
     codex_plus_core::watcher::stop_launcher_processes_and_wait();
     codex_plus_core::watcher::stop_codex_processes_and_wait();
-    spawn_codex_plus_launch(request, "Codex 已请求重启，启动任务正在后台运行。")
+    spawn_codex_plus_launch(request, "GPT Work 已请求重启，启动任务正在后台运行。")
 }
 
 fn spawn_codex_plus_launch(request: LaunchRequest, accepted_message: &str) -> CommandResult<Value> {
@@ -497,7 +497,7 @@ pub fn load_ccs_providers() -> CommandResult<CcsProvidersPayload> {
     match codex_plus_core::ccs_import::list_codex_providers_from_db(&db_path) {
         Ok(providers) => ok(
             &format!(
-                "已读取 cc-switch Codex 供应商配置：{} 个。",
+                "已读取 cc-switch GPT Work 供应商配置：{} 个。",
                 providers.len()
             ),
             CcsProvidersPayload {
@@ -1680,9 +1680,9 @@ pub fn read_relay_files() -> CommandResult<RelayFilesPayload> {
 pub fn check_env_conflicts() -> CommandResult<EnvConflictsPayload> {
     let conflicts = codex_plus_core::env_conflicts::detect_env_conflicts();
     let message = if conflicts.is_empty() {
-        "未检测到会覆盖 Codex 供应商配置的 OPENAI 环境变量。"
+        "未检测到会覆盖 GPT Work 供应商配置的 OPENAI 环境变量。"
     } else {
-        "检测到可能覆盖 Codex 供应商配置的 OPENAI 环境变量。"
+        "检测到可能覆盖 GPT Work 供应商配置的 OPENAI 环境变量。"
     };
     ok(message, EnvConflictsPayload { conflicts })
 }
@@ -1981,7 +1981,7 @@ pub fn sync_live_context_entries(
     if let Some(parent) = config_path.parent() {
         if let Err(error) = std::fs::create_dir_all(parent) {
             return failed(
-                &format!("创建 Codex 配置目录失败：{error}"),
+                &format!("创建 GPT Work 配置目录失败：{error}"),
                 LiveContextEntriesPayload {
                     entries: empty_context_entries(),
                 },
@@ -2212,7 +2212,7 @@ pub async fn diagnose_relay_profile(profile: RelayProfile) -> CommandResult<Prov
             profile_name,
             model: test_model,
             summary: "官方登录供应商无需 API 诊断。".to_string(),
-            recommendation: "如果 Codex 官方账号可用，直接使用官方登录模式即可。".to_string(),
+            recommendation: "如果 GPT Work 官方账号可用，直接使用官方登录模式即可。".to_string(),
             checks,
         };
         return ok("Provider Doctor：官方登录供应商无需 API 诊断。", payload);
@@ -2342,7 +2342,7 @@ pub async fn diagnose_relay_profile(profile: RelayProfile) -> CommandResult<Prov
         "ok"
     };
     let summary = if failed_count > 0 {
-        format!("发现 {failed_count} 项失败，Codex 可能无法使用该供应商。")
+        format!("发现 {failed_count} 项失败，GPT Work 可能无法使用该供应商。")
     } else if warning_count > 0 {
         format!("基础连接可用，但有 {warning_count} 项需要确认。")
     } else {
@@ -2386,7 +2386,7 @@ fn provider_doctor_recommendation(checks: &[ProviderDoctorCheck]) -> String {
     if checks.iter().any(|check| check.status == "warning") {
         return "连接可用，但测试模型没有出现在模型列表里；建议改用上游返回的模型名。".to_string();
     }
-    "可以作为 Codex 供应商使用；如果真实对话仍失败，请查看协议代理日志里的上游响应。".to_string()
+    "可以作为 GPT Work 供应商使用；如果真实对话仍失败，请查看协议代理日志里的上游响应。".to_string()
 }
 
 #[tauri::command]

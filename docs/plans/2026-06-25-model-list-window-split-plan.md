@@ -2,7 +2,7 @@
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 `superpowers:subagent-driven-development`（推荐）或 `superpowers:executing-plans` 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 将 CodexPlusPlus 的模型列表从单文本框（模型名可带 `[1M]` 后缀）改造为左右并排双文本框（左侧模型名、右侧上下文窗口），在存储层把 `model_list` 和 `model_windows` 彻底分离，使 Codex 客户端永远看不到带后缀的模型名。
+**目标：** 将 CodexPlusPlus 的模型列表从单文本框（模型名可带 `[1M]` 后缀）改造为左右并排双文本框（左侧模型名、右侧上下文窗口），在存储层把 `model_list` 和 `model_windows` 彻底分离，使 GPT Work 客户端永远看不到带后缀的模型名。
 
 **架构：** 在 `RelayProfile` 中新增 `model_windows` JSON map 字段；后端 `collect_catalog_entries` 改为从 `model_list`（无后缀 slug 列表）和 `model_windows`（slug -> 窗口 token）组合生成 catalog；前端把模型列表 UI 拆为左右两个 textarea，保存时按行组装成 `model_windows`；settings 加载时自动把旧格式 `deepseek-v4-flash[1M]` 一次性迁移到新格式。
 
@@ -559,7 +559,7 @@ git commit -m "feat(manager): 添加 model_windows 文本与 map 互转辅助函
       </Button>
     </div>
     <p className="field-hint">
-      每行一个模型；左侧填模型名，右侧填上下文窗口（如 <code>1M</code>、<code>200K</code> 或 <code>1000000</code>）。右侧留空表示使用 Codex 默认长度。
+      每行一个模型；左侧填模型名，右侧填上下文窗口（如 <code>1M</code>、<code>200K</code> 或 <code>1000000</code>）。右侧留空表示使用 GPT Work 默认长度。
     </p>
   </Field>
 ) : null}
@@ -857,10 +857,10 @@ bash scripts/installer/macos/package-dmg.sh 1.2.18 arm64
 2. 在管理工具中输入：
    - 左侧：`deepseek/deepseek-v4-flash`
    - 右侧：`1M`
-3. 保存并启动 Codex。
+3. 保存并启动 GPT Work。
 4. 检查 `~/.codex/config.toml`：`model` 无后缀。
 5. 检查 `~/.codex/model-catalogs/<profile>.json`：slug 无后缀，context_window 为 1M。
-6. 在 Codex 中选择模型，确认不报 "is not a valid model ID"。
+6. 在 GPT Work 中选择模型，确认不报 "is not a valid model ID"。
 
 - [ ] **步骤 5：Commit（如有文档更新）**
 
@@ -878,7 +878,7 @@ git commit -m "docs: 更新模型列表与窗口分离的使用说明"
 - 双输入框 UI：任务 8 覆盖。
 - 存储层分离 `model_list` + `model_windows`：任务 1、4、10 覆盖。
 - 旧数据一次性迁移：任务 2、5 覆盖。
-- Codex 看不到带后缀字符串：任务 4（catalog slug 无后缀）+ 任务 12（config.toml model 无后缀）覆盖。
+- GPT Work 看不到带后缀字符串：任务 4（catalog slug 无后缀）+ 任务 12（config.toml model 无后缀）覆盖。
 - 行数校验：任务 10 覆盖。
 - 测试：任务 13 覆盖。
 

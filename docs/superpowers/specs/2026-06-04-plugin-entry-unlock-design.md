@@ -1,8 +1,8 @@
 # Plugin Entry Unlock Restoration Design
 
-**Goal:** Restore the Codex++ 1.1.9 plugin entry unlock path while keeping the current marketplace unlock path, and expose separate switches for entry unlock, marketplace unlock, and force install/load.
+**Goal:** Restore the GPT Work++ 1.1.9 plugin entry unlock path while keeping the current marketplace unlock path, and expose separate switches for entry unlock, marketplace unlock, and force install/load.
 
-**Architecture:** Split plugin-related injection into three independently controlled layers: current marketplace request/filter patching, restored legacy plugin entry unlocking, and force install button unlocking. Backend settings persist each layer independently, while the injected Codex++ menu and manager settings expose clear toggles.
+**Architecture:** Split plugin-related injection into three independently controlled layers: current marketplace request/filter patching, restored legacy plugin entry unlocking, and force install button unlocking. Backend settings persist each layer independently, while the injected GPT Work++ menu and manager settings expose clear toggles.
 
 **Tech Stack:** Rust settings persistence (`codex-plus-core`), Tauri manager commands/UI, React/TypeScript manager UI, and runtime JavaScript injection in `assets/inject/renderer-inject.js`.
 
@@ -10,12 +10,12 @@
 
 ## Requirements
 
-1. Keep the current Codex++ marketplace unlock behavior.
+1. Keep the current GPT Work++ marketplace unlock behavior.
    - The current `list-plugins` request patch must stay available.
    - The current marketplace/filter patch and marketplace display-name handling must stay available.
    - This layer is controlled by a dedicated `插件市场解锁` switch.
 
-2. Restore the Codex++ 1.1.9 plugin entry unlock behavior.
+2. Restore the GPT Work++ 1.1.9 plugin entry unlock behavior.
    - Find the left navigation Plugins/插件 button.
    - Use the React fiber auth context path from 1.1.9 to temporarily set `authMethod` to `chatgpt`.
    - Force the entry button visible and enabled.
@@ -127,7 +127,7 @@ During `scanDeferred()`:
 
 ## UI Design
 
-Codex++ injected menu shows three plugin rows:
+GPT Work++ injected menu shows three plugin rows:
 
 1. **插件市场解锁**
    - Description: `API Key 模式下扩展插件市场请求，尽量显示完整插件列表。`

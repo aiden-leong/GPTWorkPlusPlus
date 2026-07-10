@@ -73,7 +73,7 @@ const MENU_LABEL_TRANSLATIONS: &[(&str, &str)] = &[
     ("Zoom Out", "缩小"),
     ("Actual Size", "实际大小"),
     ("Toggle Full Screen", "切换全屏"),
-    ("Codex Documentation", "Codex 文档"),
+    ("GPT Work Documentation", "GPT Work 文档"),
     ("What's new", "更新内容"),
     ("Automations", "自动化"),
     ("Local Environments", "本地环境"),

@@ -12,9 +12,9 @@ use thiserror::Error;
 pub enum ZedRemoteError {
     #[error("{0}")]
     Validation(&'static str),
-    #[error("Cannot read Codex remote connection state")]
+    #[error("Cannot read GPT Work remote connection state")]
     StateRead(#[source] std::io::Error),
-    #[error("Cannot parse Codex remote connection state")]
+    #[error("Cannot parse GPT Work remote connection state")]
     StateParse(#[source] serde_json::Error),
     #[error("Cannot read Codex++ Zed remote project registry")]
     RegistryRead(#[source] std::io::Error),

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Codex++ will add an optional enhancement for GPT Work worktree creation. The feature makes new worktrees start from a remote tracking branch such as `upstream/main`, instead of inheriting a stale local `HEAD` or unsynced branch state.
+GPT Work++ will add an optional enhancement for GPT Work worktree creation. The feature makes new worktrees start from a remote tracking branch such as `upstream/main`, instead of inheriting a stale local `HEAD` or unsynced branch state.
 
 The intended Git equivalent is:
 
@@ -11,14 +11,14 @@ git fetch upstream <base-branch>
 git worktree add -b <new-branch> <worktree-path> upstream/<base-branch>
 ```
 
-The implementation will first add a reliable Rust backend capability and a Codex++ menu entry. After that is tested, the renderer injection can enhance GPT Work's native worktree creation UI when the current Codex version exposes a recognizable action point. If the native action point cannot be detected, Codex++ must show a clear fallback message and keep the menu entry usable.
+The implementation will first add a reliable Rust backend capability and a GPT Work++ menu entry. After that is tested, the renderer injection can enhance GPT Work's native worktree creation UI when the current GPT Work version exposes a recognizable action point. If the native action point cannot be detected, GPT Work++ must show a clear fallback message and keep the menu entry usable.
 
 ## Goals
 
 - Create new worktrees from a remote tracking ref, defaulting to `upstream/<base-branch>`.
 - Reduce conflicts caused by GPT Work creating worktrees from stale local state.
 - Keep the Git operation explicit and testable in Rust, not hidden inside the renderer script.
-- Provide a stable Codex++ menu workflow even when GPT Work UI internals change.
+- Provide a stable GPT Work++ menu workflow even when GPT Work UI internals change.
 - Enhance the native GPT Work worktree flow when it can be detected safely.
 - Report actionable errors for missing remotes, missing base branches, existing branches, existing paths, and invalid repositories.
 
@@ -27,14 +27,14 @@ The implementation will first add a reliable Rust backend capability and a Codex
 - Replacing Git's own branch, worktree, or conflict behavior.
 - Force-resetting local branches or deleting existing worktrees.
 - Automatically pushing branches or changing upstream tracking for existing branches.
-- Modifying `/Applications/Codex.app` bundle files directly.
+- Modifying `/Applications/GPT Work.app` bundle files directly.
 - Supporting non-Git repositories.
 
 ## User Experience
 
-Codex++ settings gains an `Upstream worktree` enhancement toggle. The toggle is enabled only when backend support is available.
+GPT Work++ settings gains an `Upstream worktree` enhancement toggle. The toggle is enabled only when backend support is available.
 
-When the user uses the Codex++ menu entry, Codex++ asks for:
+When the user uses the GPT Work++ menu entry, GPT Work++ asks for:
 
 - Repository path.
 - New branch name.
@@ -48,9 +48,9 @@ The primary action label should make the Git source clear, for example:
 Create from upstream/<base-branch>
 ```
 
-On success, Codex++ shows the created worktree path and source ref. On failure, Codex++ shows a concise error and keeps the user's entered values so they can fix the issue.
+On success, GPT Work++ shows the created worktree path and source ref. On failure, GPT Work++ shows a concise error and keeps the user's entered values so they can fix the issue.
 
-When native GPT Work worktree enhancement is active, the user can continue using Codex's normal worktree creation path. Codex++ intercepts or augments the action only when it can identify the repository path, new branch name, worktree path, and base branch. If any required value is ambiguous, Codex++ does not run Git. It shows a toast that says the native flow could not be safely enhanced and points the user to the Codex++ menu entry.
+When native GPT Work worktree enhancement is active, the user can continue using GPT Work's normal worktree creation path. GPT Work++ intercepts or augments the action only when it can identify the repository path, new branch name, worktree path, and base branch. If any required value is ambiguous, GPT Work++ does not run Git. It shows a toast that says the native flow could not be safely enhanced and points the user to the GPT Work++ menu entry.
 
 ## Backend Architecture
 
@@ -157,7 +157,7 @@ Include stderr in diagnostic logs, but keep renderer-facing messages short and s
 
 ## Renderer Injection
 
-Add the menu workflow first. It should reuse existing Codex++ injected menu patterns instead of creating a visually separate system.
+Add the menu workflow first. It should reuse existing GPT Work++ injected menu patterns instead of creating a visually separate system.
 
 The renderer script should:
 
@@ -170,9 +170,9 @@ The renderer script should:
 
 Native GPT Work enhancement should be implemented as a guarded adapter:
 
-- Detect known Codex worktree creation controls through stable attributes first, then text/structure as fallback.
+- Detect known GPT Work worktree creation controls through stable attributes first, then text/structure as fallback.
 - Extract repository path, branch name, target path, and base branch before intercepting.
-- If extraction is incomplete, do not prevent the native action unless Codex++ can show a clear fallback.
+- If extraction is incomplete, do not prevent the native action unless GPT Work++ can show a clear fallback.
 - Keep the adapter versioned so future GPT Work DOM changes can be diagnosed.
 
 ## Settings
@@ -211,15 +211,15 @@ Renderer tests can be lightweight and focused on pure helpers:
 Manual verification should cover:
 
 1. A repository with `upstream/main` newer than local `main`.
-2. Creating `feature/test` at a new worktree path through Codex++ menu.
+2. Creating `feature/test` at a new worktree path through GPT Work++ menu.
 3. Confirming `git -C <worktree-path> rev-parse HEAD` matches `git -C <repo> rev-parse upstream/main`.
 4. Confirming a duplicate branch gives a clear `branch-exists` error.
 5. Confirming a missing `upstream` remote gives a clear `remote-missing` error.
-6. Confirming native Codex worktree enhancement either creates correctly or falls back without corrupting the native flow.
+6. Confirming native GPT Work worktree enhancement either creates correctly or falls back without corrupting the native flow.
 
 ## Rollout Plan
 
-Phase 1 adds the Rust backend module, bridge routes, tests, and Codex++ menu entry.
+Phase 1 adds the Rust backend module, bridge routes, tests, and GPT Work++ menu entry.
 
 Phase 2 adds native GPT Work worktree UI detection and guarded interception.
 

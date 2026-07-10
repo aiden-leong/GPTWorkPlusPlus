@@ -761,7 +761,7 @@
         color: #ffffff;
       }
       /* Dark theme overrides for delete-confirm and project-move dialogs.
-         Triggered either by Codex applying a "dark" class / data-theme="dark"
+         Triggered either by GPT Work applying a "dark" class / data-theme="dark"
          on its document root, or by the OS-level prefers-color-scheme hint.
          Palette matches the existing Codex++ dark modal (.codex-plus-modal-content). */
       html.dark .codex-delete-confirm-overlay,
@@ -1430,7 +1430,7 @@
   async function codexSettingStorageModule() {
     const module = await loadCodexAppModule("setting-storage-");
     if (typeof module.n !== "function" || typeof module.s !== "function") {
-      throw new Error("Codex setting-storage 接口不可用");
+      throw new Error("GPT Work setting-storage 接口不可用");
     }
     return module;
   }
@@ -2063,7 +2063,7 @@
         const module = await loadCodexAppModule("setting-storage-");
         const dispatcherClass = typeof module.v === "function" && String(module.v).includes("dispatchMessage") ? module.v : null;
         const dispatcher = dispatcherClass?.getInstance?.();
-        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Codex dispatcher unavailable");
+        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("GPT Work dispatcher unavailable");
         if (dispatcher.__codexServiceTierOriginalDispatchMessage) {
           window.__codexServiceTierRequestOverrideInstalled = codexServiceTierRequestOverrideVersion;
           return;
@@ -4192,7 +4192,7 @@
   async function codexStateApi() {
     codexStateApiPromise = codexStateApiPromise || loadCodexAppModule("vscode-api-");
     const api = await codexStateApiPromise;
-    if (typeof api.n !== "function") throw new Error("Codex 状态 API 不可用");
+    if (typeof api.n !== "function") throw new Error("GPT Work 状态 API 不可用");
     return api.n;
   }
 
@@ -4683,7 +4683,7 @@
   function noteAppServerModelRequestPatchMiss(event, detail) {
     appServerModelRequestPatchMissCount += 1;
     // installAppServerModelRequestPatch() runs on every model-whitelist
-    // refresh tick (~120ms). On Codex builds where the app-server module was
+    // refresh tick (~120ms). On GPT Work builds where the app-server module was
     // renamed/removed (e.g. 26.623+, issue #1324) this layer never succeeds
     // and would otherwise emit the same diagnostic on every tick forever.
     // Report the first miss so telemetry still captures the cause, then stay
@@ -5603,7 +5603,7 @@
   async function moveSessionToProject(ref, target) {
     if (!ref.session_id) throw new Error("未找到会话 ID");
     if (!target?.path) throw new Error("目标项目路径为空");
-    if (!isNativeProjectTarget(target)) throw new Error("目标项目不在 Codex 项目列表中");
+    if (!isNativeProjectTarget(target)) throw new Error("目标项目不在 GPT Work 项目列表中");
     const result = await postJson("/move-thread-workspace", { ...ref, target_cwd: target.path });
     if (result.status !== "moved") throw new Error(result.message || "移动项目失败");
     await setProjectlessThreadIds(ref, "remove");
@@ -6402,7 +6402,7 @@
         const module = await loadCodexAppModule("setting-storage-");
         const dispatcherClass = typeof module.v === "function" && String(module.v).includes("dispatchMessage") ? module.v : null;
         const dispatcher = dispatcherClass?.getInstance?.();
-        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Codex dispatcher unavailable");
+        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("GPT Work dispatcher unavailable");
         if (!dispatcher.__codexUpstreamWorktreeOriginalDispatchMessage) {
           dispatcher.__codexUpstreamWorktreeOriginalDispatchMessage = dispatcher.dispatchMessage.bind(dispatcher);
           dispatcher.dispatchMessage = (type, payload) => {
@@ -8481,9 +8481,9 @@
 // === 粘贴修复 (CodexPlusPlus 页面增强) ===
 // 控制开关：window.__CODEX_PLUS_PASTE_FIX__ = { enabled: <bool> }
 // 由 CodexPlusPlus 在启动时根据 settings.codexAppPasteFix 注入。
-// 关闭时不进入 if 体，行为与原 Codex 完全一致；开启时在 document 捕获阶段
+// 关闭时不进入 if 体，行为与原 GPT Work 完全一致；开启时在 document 捕获阶段
 // 拦截 paste，若 text/plain 非空则阻止默认行为并调用 execCommand('insertText')
-// 插入纯文本，避免 Codex 把 Word 复制的内容识别为附件。
+// 插入纯文本，避免 GPT Work 把 Word 复制的内容识别为附件。
 // SENTINEL 保证多次执行（页面刷新、脚本重注入）只装一次 handler。
 if (window.__CODEX_PLUS_PASTE_FIX__ && window.__CODEX_PLUS_PASTE_FIX__.enabled === true) {
   (() => {

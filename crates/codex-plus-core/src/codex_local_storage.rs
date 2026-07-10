@@ -41,7 +41,7 @@ pub(crate) const SANITIZE_LOCAL_STORAGE_SCRIPT: &str = r#"
 
 const CDP_OPERATION_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// 通过 CDP 清理 Codex 页面 Local Storage 中残留的带后缀模型名。
+/// 通过 CDP 清理 GPT Work 页面 Local Storage 中残留的带后缀模型名。
 /// 目前只处理 `__codexDailyTokenUsageV1`，这是 Electron 端记录每日
 /// token 用量并回显到模型选择器的历史数据来源。
 pub async fn sanitize_local_storage_model_suffixes(debug_port: u16) -> anyhow::Result<bool> {

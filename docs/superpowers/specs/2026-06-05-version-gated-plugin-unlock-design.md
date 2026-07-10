@@ -4,7 +4,7 @@
 
 **Architecture:** Reuse backend GPT Work version detection and expose the detected version to the injected runtime settings payload. The injection script compares the GPT Work version against a fixed cutoff (`26.601.21317`) and chooses a legacy or modern plugin unlock strategy at scan time.
 
-**Tech Stack:** Rust backend settings/launcher helper routes, Codex++ runtime JavaScript injection, static injection tests in `codex-plus-core`, React/Tauri manager settings UI only if a status hint is added.
+**Tech Stack:** Rust backend settings/launcher helper routes, GPT Work++ runtime JavaScript injection, static injection tests in `codex-plus-core`, React/Tauri manager settings UI only if a status hint is added.
 
 ---
 
@@ -131,7 +131,7 @@ Add lightweight diagnostics so runtime behavior is debuggable:
 
 Avoid logging this on every scan if it becomes noisy; either log only when the strategy changes or store the last logged strategy in `window.__codexPluginUnlockStrategyLogged`.
 
-Optional UI hint in the injected Codex++ menu:
+Optional UI hint in the injected GPT Work++ menu:
 
 - Legacy: `检测到旧版 GPT Work，自动优先使用旧入口解锁。`
 - Modern: `检测到新版 GPT Work，自动优先使用插件市场解锁。`

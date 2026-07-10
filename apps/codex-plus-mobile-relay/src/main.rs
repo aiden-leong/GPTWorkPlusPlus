@@ -944,7 +944,7 @@ function appendAgentDelta(params, delta) {
   const itemId = params.itemId || params.item_id || params.item?.id || "";
   const key = `${turnId}:${itemId}`;
   if (!state.streaming || state.streaming.key !== key) {
-    const node = appendMessageNode("Codex", "", false);
+    const node = appendMessageNode("GPT Work", "", false);
     state.streaming = { key, node, bubble: node.querySelector(".bubble"), text: "" };
   }
   state.streaming.text += delta;
@@ -961,13 +961,13 @@ function handleCompletedItem(params) {
     confirmPendingMessageNode(text);
     return;
   }
-  if (role !== "Codex") return;
+  if (role !== "GPT Work") return;
   clearThinkingNode();
   if (state.streaming?.bubble) {
     state.streaming.text = text;
     state.streaming.bubble.textContent = text;
   } else {
-    appendMessageNode("Codex", text);
+    appendMessageNode("GPT Work", text);
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -1140,7 +1140,7 @@ function confirmPendingMessageNode(text) {
 }
 function appendThinkingNode() {
   if (state.thinking?.isConnected) return state.thinking;
-  const node = appendMessageNode("Codex", "正在思考...");
+  const node = appendMessageNode("GPT Work", "正在思考...");
   node.dataset.thinking = "true";
   state.thinking = node;
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -1212,7 +1212,7 @@ function turnTimestamp(turn) { const value = turn?.startedAt || turn?.createdAt 
 function itemRole(item) {
   const raw = String(item?.role || item?.author?.role || item?.message?.role || item?.item?.role || item?.type || "").toLowerCase();
   if (raw === "user" || raw === "usermessage" || raw === "input_text" || raw === "input") return "用户";
-  if (raw === "assistant" || raw === "agent" || raw === "codex" || raw === "agentmessage" || raw === "assistantmessage" || raw === "output_text" || raw === "output") return "Codex";
+  if (raw === "assistant" || raw === "agent" || raw === "codex" || raw === "agentmessage" || raw === "assistantmessage" || raw === "output_text" || raw === "output") return "GPT Work";
   if (raw === "toolcall" || raw === "tool_call" || raw === "function_call") return "工具";
   if (raw === "toolresult" || raw === "tool_result" || raw === "function_call_output") return "工具结果";
   return item?.type || item?.role || "消息";

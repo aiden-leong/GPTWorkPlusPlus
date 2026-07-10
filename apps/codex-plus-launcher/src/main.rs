@@ -638,7 +638,7 @@ async fn inject_with_context(
             }
         }
     }
-    Err(last_error.unwrap_or_else(|| anyhow::anyhow!("Codex injection failed")))
+    Err(last_error.unwrap_or_else(|| anyhow::anyhow!("GPT Work injection failed")))
 }
 
 async fn try_inject_with_context(

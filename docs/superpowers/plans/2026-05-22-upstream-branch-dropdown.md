@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add upstream branch choices to GPT Work's native start-new-chat branch dropdown so `New worktree` can start from `upstream/<base>` without a separate Codex++ dialog.
+**Goal:** Add upstream branch choices to GPT Work's native start-new-chat branch dropdown so `New worktree` can start from `upstream/<base>` without a separate GPT Work++ dialog.
 
-**Architecture:** Extend the existing upstream worktree backend defaults with structured upstream refs, then add a conservative renderer adapter that injects `Upstream` options into native branch menus and records the selected upstream ref for the existing native-create interception path. Keep the manual Codex++ dialog as fallback for now, but make the native dropdown path the primary UX.
+**Architecture:** Extend the existing upstream worktree backend defaults with structured upstream refs, then add a conservative renderer adapter that injects `Upstream` options into native branch menus and records the selected upstream ref for the existing native-create interception path. Keep the manual GPT Work++ dialog as fallback for now, but make the native dropdown path the primary UX.
 
 **Tech Stack:** Rust `codex-plus-core`, JSON bridge routes, plain JavaScript renderer injection, `cargo test`, `node --check`.
 
@@ -413,13 +413,13 @@ Expected: DMG created under `dist/macos/`.
 
 ```bash
 hdiutil attach "dist/macos/CodexPlusPlus-1.1.5-local-upstream-dropdown-macos-$(uname -m).dmg" -nobrowse -readonly
-ditto "/Volumes/Codex++/Codex++.app" "/Applications/Codex++.app"
-ditto "/Volumes/Codex++/Codex++ 管理工具.app" "/Applications/Codex++ 管理工具.app"
-codesign --force --deep --sign - "/Applications/Codex++.app"
-codesign --force --deep --sign - "/Applications/Codex++ 管理工具.app"
-codesign --verify --deep --strict --verbose=2 "/Applications/Codex++.app"
-codesign --verify --deep --strict --verbose=2 "/Applications/Codex++ 管理工具.app"
-hdiutil detach "/Volumes/Codex++"
+ditto "/Volumes/GPT Work++/GPT Work++.app" "/Applications/GPT Work++.app"
+ditto "/Volumes/GPT Work++/GPT Work++ 管理工具.app" "/Applications/GPT Work++ 管理工具.app"
+codesign --force --deep --sign - "/Applications/GPT Work++.app"
+codesign --force --deep --sign - "/Applications/GPT Work++ 管理工具.app"
+codesign --verify --deep --strict --verbose=2 "/Applications/GPT Work++.app"
+codesign --verify --deep --strict --verbose=2 "/Applications/GPT Work++ 管理工具.app"
+hdiutil detach "/Volumes/GPT Work++"
 ```
 
 Expected: both apps verify.

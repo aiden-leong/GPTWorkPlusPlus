@@ -28,7 +28,7 @@ pub fn export_markdown_from_paths(
     if saw_candidate {
         result
     } else {
-        failed(&thread_id, "未配置本地 Codex 数据库")
+        failed(&thread_id, "未配置本地 GPT Work 数据库")
     }
 }
 
@@ -46,7 +46,7 @@ impl MarkdownExportService {
 
     pub fn export(&self, session: &SessionRef) -> ExportResult {
         let Some(db_path) = &self.db_path else {
-            return failed(&session.session_id, "未配置本地 Codex 数据库");
+            return failed(&session.session_id, "未配置本地 GPT Work 数据库");
         };
         if !db_path.exists() {
             return failed(
