@@ -54,6 +54,7 @@ import {
   setUserScriptEnabled,
   deleteUserScript,
 } from "./script-market.js";
+import { loadProviderSyncTargets, syncProvidersNow } from "./provider-sync.js";
 
 const HOME = os.homedir();
 const LOGS_DIR = path.join(CODEX_HOME, "logs");
@@ -243,8 +244,15 @@ const h = {
 
   // ====== Provider Sync ======
 
-  "/provider-sync/targets": () => notImplemented("provider-sync.targets"),
-  "/provider-sync/now": () => notImplemented("provider-sync.now"),
+  "/provider-sync/targets": async () => {
+    const r = await loadProviderSyncTargets();
+    return ok(r);
+  },
+  "/provider-sync/now": async (args) => {
+    const targetProvider = args?.targetProvider ?? null;
+    const r = await syncProvidersNow(targetProvider);
+    return r.status === "ok" ? ok(r) : r;
+  },
 
   // ====== Script Market ======
 
