@@ -1,17 +1,46 @@
 // 业务 handlers — Node 实现
-//
-// 每个 handler 接收一个 args 对象（即除了 path 之外的全部请求体字段），
-// 返回一个 CommandResult 形态的 JSON：
-//   { status: "ok" | "failed", message: "...", ...payload }
-//
-// 阶段 1：所有 handler 都是 stub，返回与 Rust 版一致的数据 shape，
-// 但不做实际 IO。阶段 2 会逐端点替换为真实逻辑。
+// 阶段 2：批量接上真实逻辑（settings / overview / relay / env / sessions / upstream）
 
 import * as path from "node:path";
 import * as os from "node:os";
+import * as fs from "node:fs/promises";
+
+import {
+  defaultBackendSettings,
+  settingsStore,
+  CODEX_HOME,
+  SETTINGS_PATH,
+  defaultRelayProfile,
+  normalizeSettings,
+} from "./settings.js";
+import {
+  relayStatus,
+  readRelayFiles,
+  saveRelayFile,
+  CONFIG_PATH,
+  AUTH_PATH,
+} from "./relay-config.js";
+import { checkEnvConflicts, removeEnvConflicts } from "./env-conflicts.js";
+import { listLocalSessions, deleteLocalSession } from "./sessions.js";
+import {
+  fetchRelayProfileModels,
+  testRelayProfile,
+  diagnoseRelayProfile,
+} from "./upstream.js";
+import { launchCodexPlus, openExternalUrl } from "./launcher.js";
+import {
+  pluginMarketplaceStatus,
+  repairPluginMarketplace,
+  remotePluginMarketplaceStatus,
+  repairRemotePluginMarketplace,
+} from "./plugin-marketplace.js";
+import { listZedRemoteProjects } from "./zed-remote.js";
+import { listUserScripts } from "./user-scripts.js";
 
 const HOME = os.homedir();
-const CODEX_HOME = path.join(HOME, ".codex");
+const LOGS_DIR = path.join(CODEX_HOME, "logs");
+const LOG_PATH = path.join(LOGS_DIR, "codex-plus.log");
+const VERSION = "0.0.0-node";
 
 // ====== 工具 ======
 
@@ -24,65 +53,58 @@ function failed(message, payload = {}) {
 }
 
 function notImplemented(name) {
-  return failed(`Node 端 stub：${name}（阶段 2 实现）`);
+  return failed(`Node 端 stub：${name}（阶段 2+ 实现）`);
 }
 
-// ====== 默认数据 ======
+// ====== Helpers ======
 
-function defaultSettings() {
-  return {
-    codexAppPath: "",
-    codexAppPathStatus: "not_checked",
-    codexGoalsEnabled: false,
-    providerSyncEnabled: false,
-    cliWrapperEnabled: false,
-    cliWrapperBaseUrl: "",
-    cliWrapperApiKey: "",
-    cliWrapperApiKeyEnv: "",
-    cliWrapperModel: "",
-    codexAppPasteFix: true,
-    codexAppStepwiseEnabled: false,
-    codexAppForceChineseLocale: true,
-    codexAppFastStartup: false,
-    codexAppNativeMenuLocalization: true,
-    codexAppImageOverlayEnabled: false,
-    codexAppComputerUseGuard: true,
-    zedRemoteOpenStrategy: "default",
-    launchArgs: "",
-    launchMode: "patch",
-    imageOverlay: { enabled: false, fit: "fit", opacity: 1 },
-    relayProfiles: [],
-    relayProfilesEnabled: false,
-    activeRelayProfileId: null,
-    relayContextSelection: { mcpServers: [], skills: [], plugins: [] },
-    userScripts: { enabled: false, installed: {} },
-  };
+async function findCodexAppDir(savedPath) {
+  // 1) 优先用 settings 里的 codexAppPath
+  if (savedPath && savedPath.trim()) {
+    try {
+      const stat = await fs.stat(savedPath);
+      if (stat.isDirectory()) return savedPath;
+    } catch {}
+  }
+  // 2) 常见默认路径
+  const candidates = [
+    "/Applications/Codex.app",
+    path.join(HOME, "Applications", "Codex.app"),
+  ];
+  for (const c of candidates) {
+    try {
+      const stat = await fs.stat(c);
+      if (stat.isDirectory()) return c;
+    } catch {}
+  }
+  return null;
 }
 
-function defaultOverview() {
-  return {
-    codex_app: { status: "not_checked", path: null },
-    codex_version: null,
-    silent_shortcut: { status: "not_checked", path: null },
-    management_shortcut: { status: "not_checked", path: null },
-    latest_launch: null,
-    current_version: "0.0.0-node",
-    settings_path: path.join(CODEX_HOME, "codex-plus-settings.json"),
-    logs_path: path.join(CODEX_HOME, "logs", "codex-plus.log"),
-  };
+async function codexAppVersion(appDir) {
+  if (!appDir) return null;
+  const plist = path.join(appDir, "Contents", "Info.plist");
+  try {
+    const text = await fs.readFile(plist, "utf8");
+    const m = text.match(/<key>CFBundleShortVersionString<\/key>\s*<string>([^<]+)<\/string>/);
+    if (m) return m[1].trim();
+  } catch {}
+  return null;
 }
 
-function defaultRelayStatus() {
-  return {
-    authenticated: false,
-    authSource: "none",
-    accountLabel: null,
-    configPath: path.join(CODEX_HOME, "config.toml"),
-    configured: false,
-    requiresOpenaiAuth: true,
-    hasBearerToken: false,
-    backupPath: null,
-  };
+function pathState(p) {
+  if (!p) return { status: "not_configured", path: null };
+  return { status: "ok", path: p };
+}
+
+async function readTail(filePath, lines) {
+  try {
+    const text = await fs.readFile(filePath, "utf8");
+    const arr = text.split("\n");
+    return arr.slice(Math.max(0, arr.length - lines)).join("\n");
+  } catch (err) {
+    if (err.code === "ENOENT") return "";
+    throw err;
+  }
 }
 
 // ====== Handlers ======
@@ -90,204 +112,247 @@ function defaultRelayStatus() {
 const h = {
   // ====== 系统信息 ======
 
-  "/manager/backend-version": () => ok({ version: "0.0.0-node", gitHash: "" }),
+  "/manager/backend-version": () => ok({ version: VERSION, gitHash: "" }),
   "/manager/startup-options": () =>
     ok({ debugPort: 9229, helperPort: 57321, defaultLogLines: 200 }),
 
   // ====== Overview ======
 
-  "/manager/load-overview": () => ok(defaultOverview()),
-  "/manager/launch-codex-plus": () => notImplemented("launch-codex-plus"),
-  "/manager/restart-codex-plus": () => notImplemented("restart-codex-plus"),
+  "/manager/load-overview": async () => {
+    const settings = await settingsStore.load();
+    const appDir = await findCodexAppDir(settings.codexAppPath);
+    const version = await codexAppVersion(appDir);
+    return ok({
+      codex_app: pathState(appDir),
+      codex_version: version,
+      silent_shortcut: { status: "not_checked", path: null },
+      management_shortcut: { status: "not_checked", path: null },
+      latest_launch: null,
+      current_version: VERSION,
+      settings_path: SETTINGS_PATH,
+      logs_path: LOG_PATH,
+    });
+  },
+  "/manager/launch-codex-plus": async (args) => {
+    const appPath = args?.request?.appPath ?? args?.appPath ?? "";
+    const debugPort = Number(args?.debugPort ?? 9229);
+    const helperPort = Number(args?.helperPort ?? 57321);
+    const r = await launchCodexPlus(appPath, debugPort, helperPort);
+    return r.status === "ok" ? ok(r) : r;
+  },
+  "/manager/restart-codex-plus": async (args) => {
+    const appPath = args?.request?.appPath ?? args?.appPath ?? "";
+    const debugPort = Number(args?.debugPort ?? 9229);
+    const helperPort = Number(args?.helperPort ?? 57321);
+    const r = await launchCodexPlus(appPath, debugPort, helperPort);
+    return r.status === "ok" ? ok(r) : r;
+  },
 
   // ====== Settings ======
 
-  "/manager/load-settings": () =>
-    ok({ settings: defaultSettings(), settingsPath: path.join(CODEX_HOME, "codex-plus-settings.json") }),
-  "/manager/save-settings": (args) => {
-    const settings = args.settings ?? defaultSettings();
-    return ok({ settings, settingsPath: path.join(CODEX_HOME, "codex-plus-settings.json") });
+  "/manager/load-settings": async () => {
+    const settings = await settingsStore.load();
+    return ok({ settings, settingsPath: SETTINGS_PATH });
   },
-  "/manager/reset-settings": () =>
-    ok({ settings: defaultSettings(), settingsPath: path.join(CODEX_HOME, "codex-plus-settings.json") }),
-  "/manager/reset-image-overlay-settings": () => {
-    const s = defaultSettings();
-    return ok({ settings: s, settingsPath: path.join(CODEX_HOME, "codex-plus-settings.json") });
+  "/manager/save-settings": async (args) => {
+    const input = args.settings ?? defaultBackendSettings();
+    const settings = await settingsStore.save(input);
+    return ok({ settings, settingsPath: SETTINGS_PATH });
+  },
+  "/manager/reset-settings": async () => {
+    const settings = await settingsStore.reset();
+    return ok({ settings, settingsPath: SETTINGS_PATH });
+  },
+  "/manager/reset-image-overlay-settings": async () => {
+    const settings = await settingsStore.load();
+    settings.codexAppImageOverlayEnabled = false;
+    settings.codexAppImageOverlayPath = "";
+    settings.codexAppImageOverlayOpacity = 35;
+    settings.codexAppImageOverlayFitMode = "fit";
+    settings.imageOverlay = { enabled: false, fit: "fit", opacity: 1 };
+    const saved = await settingsStore.save(settings);
+    return ok({ settings: saved, settingsPath: SETTINGS_PATH });
   },
 
   // ====== CCS Provider Import ======
 
-  "/manager/load-ccs-providers": () =>
-    ok({ dbPath: "", providers: [] }),
-  "/manager/import-ccs-providers": () => ok({ imported: 0, skipped: 0 }),
-  "/manager/load-pending-provider-import": () => ok({ pending: null }),
+  "/manager/load-ccs-providers": () => notImplemented("load-ccs-providers"),
+  "/manager/import-ccs-providers": () => notImplemented("import-ccs-providers"),
+  "/manager/load-pending-provider-import": () =>
+    ok({ pending: null }),
   "/manager/confirm-pending-provider-import": () => ok({}),
   "/manager/dismiss-pending-provider-import": () => ok({}),
 
   // ====== Local Sessions ======
 
-  "/sessions/list": () => ok({ dbPath: "", dbPaths: [], sessions: [] }),
-  "/sessions/delete": () =>
-    ok({ status: "ok", session_id: "", message: "stub", undo_token: null, backup_path: null }),
+  "/sessions/list": async () => {
+    const r = await listLocalSessions();
+    return ok(r);
+  },
+  "/sessions/delete": async (args) => {
+    const req = args.request ?? args;
+    const r = await deleteLocalSession(req);
+    return ok(r);
+  },
 
   // ====== Zed Remote ======
 
-  "/zed-remote/projects": () => ok({ projects: [] }),
-  "/zed-remote/open": () => ok({ url: "", strategy: "default" }),
+  "/zed-remote/projects": async () => {
+    const r = await listZedRemoteProjects();
+    return ok(r);
+  },
+  "/zed-remote/open": () => notImplemented("zed-remote.open"),
   "/zed-remote/forget-project": () => ok({}),
 
   // ====== Provider Sync ======
 
-  "/provider-sync/targets": () =>
-    ok({
-      configPath: "",
-      authPath: "",
-      recommendedTargetId: "",
-      targets: [],
-    }),
-  "/provider-sync/now": () =>
-    ok({
-      percent: 100,
-      message: "stub",
-      result: null,
-    }),
+  "/provider-sync/targets": () => notImplemented("provider-sync.targets"),
+  "/provider-sync/now": () => notImplemented("provider-sync.now"),
 
   // ====== Script Market ======
 
-  "/manager/refresh-script-market": () =>
-    ok({
+  "/manager/refresh-script-market": async () => {
+    const r = await listUserScripts();
+    return ok({
       market: {
         status: "ok",
-        message: "stub",
+        message: "本地扫描",
         indexUrl: "",
-        updatedAt: "",
+        updatedAt: new Date().toISOString(),
         scripts: [],
       },
-      user_scripts: { enabled: false, installed: {} },
-    }),
-  "/manager/install-market-script": () =>
-    ok({
-      market: {
-        status: "ok",
-        message: "stub",
-        indexUrl: "",
-        updatedAt: "",
-        scripts: [],
-      },
-      user_scripts: { enabled: false, installed: {} },
-    }),
+      user_scripts: r,
+    });
+  },
+  "/manager/install-market-script": () => notImplemented("install-market-script"),
   "/manager/set-user-script-enabled": () => ok({}),
   "/manager/delete-user-script": () => ok({}),
 
   // ====== External ======
 
-  "/manager/open-external-url": () => ok({}),
+  "/manager/open-external-url": async (args) => {
+    const url = args?.url ?? args?.request?.url ?? "";
+    const r = await openExternalUrl(url);
+    return r.status === "ok" ? ok(r) : r;
+  },
 
   // ====== Install / Uninstall ======
 
-  "/manager/install-entrypoints": () =>
-    ok({
-      silent_shortcut: { installed: false, path: null },
-      management_shortcut: { installed: false, path: null },
-    }),
-  "/manager/uninstall-entrypoints": () =>
-    ok({
-      silent_shortcut: { installed: false, path: null },
-      management_shortcut: { installed: false, path: null },
-    }),
-  "/manager/repair-shortcuts": () =>
-    ok({
-      silent_shortcut: { installed: false, path: null },
-      management_shortcut: { installed: false, path: null },
-    }),
+  "/manager/install-entrypoints": () => notImplemented("install-entrypoints"),
+  "/manager/uninstall-entrypoints": () => notImplemented("uninstall-entrypoints"),
+  "/manager/repair-shortcuts": () => notImplemented("repair-shortcuts"),
 
   // ====== Plugin Marketplace ======
 
-  "/manager/plugin-marketplace-status": () =>
-    ok({
-      status: "ok",
-      message: "stub",
-      activePath: null,
-      availablePaths: [],
-      canRepair: false,
-    }),
-  "/manager/repair-plugin-marketplace": () =>
-    ok({
-      status: "ok",
-      message: "stub",
-      attemptedPaths: [],
-      usedPath: null,
-    }),
-  "/manager/remote-plugin-marketplace-status": () =>
-    ok({
-      status: "ok",
-      message: "stub",
-      activePath: null,
-      availablePaths: [],
-      canRepair: false,
-    }),
-  "/manager/repair-remote-plugin-marketplace": () =>
-    ok({
-      status: "ok",
-      message: "stub",
-      activePath: null,
-      availablePaths: [],
-      canRepair: false,
-    }),
+  "/manager/plugin-marketplace-status": async () => {
+    const r = await pluginMarketplaceStatus();
+    return ok(r);
+  },
+  "/manager/repair-plugin-marketplace": async () => {
+    const r = await repairPluginMarketplace();
+    return ok(r);
+  },
+  "/manager/remote-plugin-marketplace-status": async () => {
+    const r = await remotePluginMarketplaceStatus();
+    return ok(r);
+  },
+  "/manager/repair-remote-plugin-marketplace": async () => {
+    const r = await repairRemotePluginMarketplace();
+    return ok(r);
+  },
 
   // ====== Watcher ======
 
   "/manager/load-watcher-state": () => ok({ enabled: false, disabled_flag: "" }),
-  "/manager/install-watcher": () => ok({ enabled: true, disabled_flag: "" }),
+  "/manager/install-watcher": () => ok({ enabled: false, disabled_flag: "watcher 在 Node 端未实现" }),
   "/manager/uninstall-watcher": () => ok({ enabled: false, disabled_flag: "" }),
-  "/manager/enable-watcher": () => ok({ enabled: true, disabled_flag: "" }),
+  "/manager/enable-watcher": () => ok({ enabled: false, disabled_flag: "watcher 在 Node 端未实现" }),
   "/manager/disable-watcher": () => ok({ enabled: false, disabled_flag: "" }),
 
   // ====== Logs / Diagnostics ======
 
-  "/manager/read-latest-logs": (args) => {
-    const lines = Number(args.lines || 200);
-    return ok({ path: path.join(CODEX_HOME, "logs", "codex-plus.log"), text: "", lines });
+  "/manager/read-latest-logs": async (args) => {
+    const lines = Number(args?.request?.lines ?? args?.lines ?? 200);
+    const text = await readTail(LOG_PATH, lines);
+    return ok({ path: LOG_PATH, text, lines });
   },
-  "/manager/copy-diagnostics": () => ok({ report: "" }),
+  "/manager/copy-diagnostics": async () => {
+    const text = await readTail(LOG_PATH, 500);
+    const report = [
+      "# Codex++ Diagnostics",
+      "",
+      `version: ${VERSION}`,
+      `log_path: ${LOG_PATH}`,
+      `codex_home: ${CODEX_HOME}`,
+      `settings_path: ${SETTINGS_PATH}`,
+      `node: ${process.version}`,
+      `platform: ${process.platform}`,
+      "",
+      "## Recent logs",
+      "",
+      "```",
+      text,
+      "```",
+    ].join("\n");
+    return ok({ report });
+  },
 
   // ====== Relay Status / Files ======
 
-  "/manager/relay-status": () => ok(defaultRelayStatus()),
-  "/manager/read-relay-files": () =>
-    ok({
-      configPath: path.join(CODEX_HOME, "config.toml"),
-      authPath: path.join(CODEX_HOME, "auth.json"),
-      configContents: "",
-      authContents: "",
-    }),
+  "/manager/relay-status": async () => {
+    const r = await relayStatus();
+    return ok(r);
+  },
+  "/manager/read-relay-files": async () => {
+    const r = await readRelayFiles();
+    return ok(r);
+  },
 
   // ====== Env Conflicts ======
 
-  "/manager/check-env-conflicts": () => ok({ conflicts: [] }),
-  "/manager/remove-env-conflicts": () => ok({ removed: [] }),
+  "/manager/check-env-conflicts": async () => {
+    const r = await checkEnvConflicts();
+    return ok(r);
+  },
+  "/manager/remove-env-conflicts": async (args) => {
+    const names = args?.request?.names ?? args?.names ?? [];
+    const r = await removeEnvConflicts(names);
+    return ok(r);
+  },
 
   // ====== Relay File Edit ======
 
-  "/manager/save-relay-file": () => ok({}),
+  "/manager/save-relay-file": async (args) => {
+    const req = args.request ?? args;
+    const r = await saveRelayFile(req.file, req.contents);
+    return ok(r);
+  },
 
   // ====== Relay Switch ======
 
-  "/manager/switch-relay-profile": (args) => {
-    const profileId = args?.request?.profileId ?? "";
-    const s = defaultSettings();
-    s.activeRelayProfileId = profileId;
-    return ok({ settings: s, settingsPath: "", user_scripts: null, relay: defaultRelayStatus() });
+  "/manager/switch-relay-profile": async (args) => {
+    const profileId = args?.request?.profileId ?? args?.profileId ?? "";
+    const settings = await settingsStore.load();
+    settings.activeRelayProfileId = profileId;
+    settings.activeRelayId = profileId;
+    const saved = await settingsStore.save(settings);
+    const r = await relayStatus();
+    return ok({ settings: saved, settingsPath: SETTINGS_PATH, user_scripts: null, relay: r });
   },
-  "/manager/backfill-relay-profile-from-live": () => ok({ settings: defaultSettings() }),
+  "/manager/backfill-relay-profile-from-live": async () => {
+    const settings = await settingsStore.load();
+    return ok({ settings });
+  },
 
   // ====== Context Entries ======
 
-  "/manager/list-context-entries": () =>
-    ok({
-      settings: defaultSettings(),
+  "/manager/list-context-entries": async () => {
+    const settings = await settingsStore.load();
+    return ok({
+      settings,
       entries: { mcpServers: [], skills: [], plugins: [] },
-    }),
+    });
+  },
   "/manager/read-live-context-entries": () =>
     ok({ entries: { mcpServers: [], skills: [], plugins: [] } }),
   "/manager/upsert-context-entry": () => ok({}),
@@ -302,24 +367,28 @@ const h = {
 
   // ====== Profile Test / Models ======
 
-  "/manager/test-relay-profile": () =>
-    ok({ httpStatus: 0, endpoint: "", responsePreview: "" }),
-  "/manager/test-stepwise-settings": () => ok({ itemCount: 0, error: "" }),
-  "/manager/fetch-relay-profile-models": () => ok({ models: [], endpoint: "" }),
-  "/manager/diagnose-relay-profile": () =>
-    ok({
-      profileName: "",
-      model: "",
-      summary: "",
-      recommendation: "",
-      checks: [],
-    }),
+  "/manager/test-relay-profile": async (args) => {
+    const profile = args.profile ?? args;
+    const r = await testRelayProfile(profile);
+    return ok(r);
+  },
+  "/manager/test-stepwise-settings": () => notImplemented("test-stepwise-settings"),
+  "/manager/fetch-relay-profile-models": async (args) => {
+    const profile = args.profile ?? args;
+    const r = await fetchRelayProfileModels(profile);
+    return ok(r);
+  },
+  "/manager/diagnose-relay-profile": async (args) => {
+    const profile = args.profile ?? args;
+    const r = await diagnoseRelayProfile(profile);
+    return ok(r);
+  },
 
   // ====== Injection ======
 
-  "/manager/apply-relay-injection": () => ok({ message: "stub" }),
-  "/manager/apply-pure-api-injection": () => ok({ message: "stub" }),
-  "/manager/clear-relay-injection": () => ok({ message: "stub" }),
+  "/manager/apply-relay-injection": () => notImplemented("apply-relay-injection"),
+  "/manager/apply-pure-api-injection": () => notImplemented("apply-pure-api-injection"),
+  "/manager/clear-relay-injection": () => notImplemented("clear-relay-injection"),
 
   // ====== Diagnostic events ======
 
@@ -330,7 +399,7 @@ const h = {
   "/stepwise/generate": () => notImplemented("stepwise.generate"),
   "/stepwise/test": () => notImplemented("stepwise.test"),
 
-  // ====== Sessions (Rust 原 sessions 模块) ======
+  // ====== Sessions (Rust 原 sessions 模块，保留兼容) ======
 
   "/delete": () => notImplemented("sessions.delete"),
   "/undo": () => notImplemented("sessions.undo"),

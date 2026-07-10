@@ -9,7 +9,9 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.5",
     "express": "^4.21.0",
-    "cors": "^2.8.5"
+    "smol-toml": "^1.7.0"
   }
 }
