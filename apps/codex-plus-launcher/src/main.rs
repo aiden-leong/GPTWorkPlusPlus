@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use codex_plus_core::launcher::{
     DefaultLaunchHooks, LaunchHooks, LaunchOptions, launch_and_inject_with_hooks,
 };
-use codex_plus_core::models::{DeleteResult, ExportResult, SessionRef};
+use codex_plus_storage::models::{DeleteResult, ExportResult, SessionRef};
 use codex_plus_core::routes::{BridgeContext, BridgeDataService, BridgeRuntimeService};
 use codex_plus_core::user_scripts::UserScriptManager;
 use serde_json::{Value, json};
@@ -258,7 +258,7 @@ impl LaunchHooks for LauncherHooks {
     }
 
     async fn run_provider_sync(&self) -> anyhow::Result<()> {
-        let _ = tokio::task::spawn_blocking(|| codex_plus_data::run_provider_sync(None))
+        let _ = tokio::task::spawn_blocking(|| codex_plus_storage::run_provider_sync(None))
             .await
             .map_err(|error| anyhow::anyhow!("provider sync task failed: {error}"))?;
         Ok(())
@@ -373,9 +373,9 @@ impl Default for LauncherDataService {
 impl BridgeDataService for LauncherDataService {
     async fn delete(&self, session: SessionRef) -> anyhow::Result<DeleteResult> {
         let db_paths = self.candidate_db_paths();
-        let backup_store = codex_plus_data::BackupStore::new(self.backup_dir.clone());
+        let backup_store = codex_plus_storage::BackupStore::new(self.backup_dir.clone());
         tokio::task::spawn_blocking(move || {
-            codex_plus_data::delete_local_from_paths(db_paths, backup_store, &session)
+            codex_plus_storage::delete_local_from_paths(db_paths, backup_store, &session)
         })
         .await
         .map_err(|error| anyhow::anyhow!("delete task failed: {error}"))
@@ -420,9 +420,9 @@ impl BridgeDataService for LauncherDataService {
         target_cwd: String,
     ) -> anyhow::Result<Value> {
         let db_paths = self.candidate_db_paths();
-        let backup_store = codex_plus_data::BackupStore::new(self.backup_dir.clone());
+        let backup_store = codex_plus_storage::BackupStore::new(self.backup_dir.clone());
         tokio::task::spawn_blocking(move || {
-            codex_plus_data::move_codex_thread_workspace_from_paths(
+            codex_plus_storage::move_codex_thread_workspace_from_paths(
                 db_paths,
                 backup_store,
                 &session,
@@ -461,10 +461,10 @@ impl LauncherDataService {
         paths
     }
 
-    fn storage_adapter(&self) -> codex_plus_data::SQLiteStorageAdapter {
-        codex_plus_data::SQLiteStorageAdapter::new(
+    fn storage_adapter(&self) -> codex_plus_storage::SQLiteStorageAdapter {
+        codex_plus_storage::SQLiteStorageAdapter::new(
             self.db_path.clone(),
-            codex_plus_data::BackupStore::new(self.backup_dir.clone()),
+            codex_plus_storage::BackupStore::new(self.backup_dir.clone()),
         )
     }
 }

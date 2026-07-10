@@ -270,7 +270,7 @@ where
             hooks.ensure_computer_use_config(&settings).await?;
         }
         let home = crate::relay_config::default_codex_home_dir();
-        match crate::codex_sqlite::sanitize_historical_model_suffixes(&home) {
+        match codex_plus_storage::codex_sqlite::sanitize_historical_model_suffixes(&home) {
             Ok(result) if result.updated > 0 => {
                 let _ = crate::diagnostic_log::append_diagnostic_log(
                     "launcher.sanitize_historical_model_suffixes",

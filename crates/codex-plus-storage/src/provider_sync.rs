@@ -186,7 +186,7 @@ pub fn run_provider_sync_with_target(
             .filter_map(|change| Some((change.thread_id.clone()?, change.cwd.clone()?)))
             .filter(|(thread_id, _)| !projectless_thread_ids.contains(thread_id))
             .collect::<HashMap<_, _>>();
-        let sqlite_paths = codex_plus_core::codex_sqlite::codex_session_db_paths_from_home(&home);
+        let sqlite_paths = crate::codex_sqlite::codex_session_db_paths_from_home(&home);
         let sqlite_update_count = count_sqlite_updates_for_paths(
             &sqlite_paths,
             &target_provider,
@@ -328,7 +328,7 @@ pub fn load_provider_sync_targets(codex_home: Option<&Path>) -> ProviderSyncTarg
     if let Ok(ids) = rollout_provider_ids(&home) {
         add_sources(&mut sources, ids, ProviderSyncTargetSource::Rollout);
     }
-    for db_path in codex_plus_core::codex_sqlite::codex_session_db_paths_from_home(&home) {
+    for db_path in crate::codex_sqlite::codex_session_db_paths_from_home(&home) {
         if let Ok(ids) = sqlite_provider_ids(&db_path) {
             add_sources(&mut sources, ids, ProviderSyncTargetSource::Sqlite);
         }
@@ -716,12 +716,12 @@ fn create_backup(
     }
     let db_dir = backup_dir.join("db");
     let mut db_files = Vec::new();
-    for db_path in codex_plus_core::codex_sqlite::codex_session_db_paths_from_home(home) {
-        for source in codex_plus_core::codex_sqlite::codex_sqlite_sidecar_paths(&db_path) {
+    for db_path in crate::codex_sqlite::codex_session_db_paths_from_home(home) {
+        for source in crate::codex_sqlite::codex_sqlite_sidecar_paths(&db_path) {
             if !source.exists() {
                 continue;
             }
-            let relative = codex_plus_core::codex_sqlite::relative_to_codex_home(home, &source);
+            let relative = crate::codex_sqlite::relative_to_codex_home(home, &source);
             let target = db_dir.join(&relative);
             if let Some(parent) = target.parent() {
                 fs::create_dir_all(parent)?;

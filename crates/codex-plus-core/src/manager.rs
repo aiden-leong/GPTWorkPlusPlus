@@ -1200,24 +1200,66 @@ pub fn delete_user_script(key: &str) -> Value {
 }
 
 // =============================================================================
-// Local sessions（暂未实现 —— 需要从 codex-plus-data 迁移 SQLite 逻辑，
-// core 不能依赖 data 形成循环依赖，等迁移路径确定后实现）
+// Local sessions（用 codex-plus-storage 的 SQLiteStorageAdapter）
 // =============================================================================
 
 pub fn list_local_sessions() -> Value {
+    let db_path = codex_plus_storage::codex_sqlite::codex_session_db_path();
+    let backup_store = codex_plus_storage::BackupStore::new(
+        paths::default_app_state_dir().join("backups"),
+    );
+    let adapter = codex_plus_storage::SQLiteStorageAdapter::new(db_path.clone(), backup_store);
+    let sessions = adapter.list_local_sessions().unwrap_or_else(|error| {
+        log_manager_event(
+            "manager.list_local_sessions_failed",
+            json!({"error": error.to_string()}),
+        );
+        Vec::new()
+    });
     json!({
-        "status": "skipped",
-        "dbPath": "",
-        "sessions": [],
-        "message": "Local sessions 暂未在 HTTP bridge 中实现（等待 core/data 重构）"
+        "dbPath": db_path.to_string_lossy().to_string(),
+        "sessions": sessions,
     })
 }
 
-pub fn delete_local_session() -> Value {
-    json!({
-        "status": "skipped",
-        "message": "Local sessions 删除暂未在 HTTP bridge 中实现"
-    })
+pub fn delete_local_session(request: DeleteLocalSessionRequest) -> Value {
+    let db_paths = if let Some(specific) = request.db_path.as_deref() {
+        vec![PathBuf::from(specific)]
+    } else {
+        codex_plus_storage::codex_sqlite::codex_session_db_paths_from_home(
+            &codex_home::default_codex_home_dir(),
+        )
+    };
+    let backup_store = codex_plus_storage::BackupStore::new(
+        paths::default_app_state_dir().join("backups"),
+    );
+    let session_ref = codex_plus_storage::models::SessionRef {
+        session_id: request.session_id.clone(),
+        title: request.title.clone(),
+    };
+    let result = codex_plus_storage::delete_local_from_paths(
+        db_paths,
+        backup_store,
+        &session_ref,
+    );
+    log_manager_event(
+        "manager.delete_local_session",
+        json!({
+            "sessionId": request.session_id,
+            "title": request.title,
+        }),
+    );
+    serde_json::to_value(&result).unwrap_or(Value::Null)
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteLocalSessionRequest {
+    pub session_id: String,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub db_path: Option<String>,
 }
 
 // =============================================================================
@@ -1291,16 +1333,30 @@ pub fn repair_remote_plugin_marketplace() -> Value {
 }
 
 pub fn load_provider_sync_targets() -> Value {
+    let home = codex_home::default_codex_home_dir();
+    let list = codex_plus_storage::load_provider_sync_targets(Some(&home));
     json!({
-        "status": "skipped",
-        "targets": [],
-        "providers": []
+        "status": "ok",
+        "currentProvider": list.current_provider,
+        "targets": list.targets,
     })
 }
 
-pub fn sync_providers_now() -> Value {
+pub fn sync_providers_now(target_provider: Option<String>) -> Value {
+    let home = codex_home::default_codex_home_dir();
+    let result = codex_plus_storage::run_provider_sync_with_target(
+        Some(&home),
+        target_provider.as_deref(),
+    );
     json!({
-        "status": "skipped",
-        "message": "Provider sync 暂未在 HTTP bridge 中实现"
+        "status": match result.status {
+            codex_plus_storage::ProviderSyncStatus::Synced => "synced",
+            codex_plus_storage::ProviderSyncStatus::Skipped => "skipped",
+            codex_plus_storage::ProviderSyncStatus::Disabled => "disabled",
+        },
+        "message": result.message,
+        "targetProvider": result.target_provider,
+        "changedSessionFiles": result.changed_session_files,
+        "sqliteRowsUpdated": result.sqlite_rows_updated,
     })
 }

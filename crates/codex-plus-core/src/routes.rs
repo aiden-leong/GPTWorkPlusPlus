@@ -5,7 +5,9 @@ use std::time::Instant;
 use async_trait::async_trait;
 use serde_json::{Value, json};
 
-use crate::models::{DeleteResult, DeleteStatus, ExportResult, ExportStatus, SessionRef};
+use codex_plus_storage::models::{
+    DeleteResult, DeleteStatus, ExportResult, ExportStatus, SessionRef,
+};
 use crate::settings::{BackendSettings, SettingsStore};
 use crate::status::StatusStore;
 use crate::user_scripts::UserScriptManager;
@@ -351,8 +353,8 @@ pub async fn handle_bridge_request(
         "/manager/load-pending-provider-import" => Ok(crate::manager::load_pending_provider_import()),
         "/manager/confirm-pending-provider-import" => manager_confirm_pending_provider_import(payload.clone()),
         "/manager/dismiss-pending-provider-import" => Ok(crate::manager::dismiss_pending_provider_import()),
-        "/manager/list-local-sessions" => Ok(crate::manager::list_local_sessions()),
-        "/manager/delete-local-session" => Ok(crate::manager::delete_local_session()),
+        "/sessions/list" => Ok(crate::manager::list_local_sessions()),
+        "/sessions/delete" => manager_delete_local_session(payload.clone()),
         "/manager/fetch-relay-profile-models" => Ok(crate::manager::fetch_relay_profile_models()),
         "/manager/diagnose-relay-profile" => Ok(crate::manager::diagnose_relay_profile()),
         "/manager/repair-plugin-marketplace" => Ok(crate::manager::repair_plugin_marketplace()),
@@ -371,8 +373,8 @@ pub async fn handle_bridge_request(
             let key = payload.get("key").and_then(Value::as_str).unwrap_or("");
             Ok(crate::manager::delete_user_script(key))
         }
-        "/manager/load-provider-sync-targets" => Ok(crate::manager::load_provider_sync_targets()),
-        "/manager/sync-providers-now" => Ok(crate::manager::sync_providers_now()),
+        "/provider-sync/targets" => Ok(crate::manager::load_provider_sync_targets()),
+        "/provider-sync/now" => manager_sync_providers_now(payload.clone()),
         "/delete" => result_value(ctx.data.delete(session_from_payload(&payload)).await),
         "/undo" => {
             let undo_token = payload
@@ -1172,4 +1174,23 @@ fn manager_confirm_pending_provider_import(payload: Value) -> anyhow::Result<Val
     .map_err(|error| anyhow::anyhow!("解析 request 失败：{error}"))?;
     let result = crate::manager::confirm_pending_provider_import(request);
     Ok(wrap_ok_value(result.into_value(), "provider 已导入。"))
+}
+
+fn manager_delete_local_session(payload: Value) -> anyhow::Result<Value> {
+    let request: crate::manager::DeleteLocalSessionRequest = serde_json::from_value(
+        payload.get("request").cloned().unwrap_or(payload),
+    )
+    .map_err(|error| anyhow::anyhow!("解析 request 失败：{error}"))?;
+    let result = crate::manager::delete_local_session(request);
+    Ok(wrap_ok_value(result, "本地 session 已处理。"))
+}
+
+fn manager_sync_providers_now(payload: Value) -> anyhow::Result<Value> {
+    let target_provider = payload
+        .get("targetProvider")
+        .or_else(|| payload.get("target_provider"))
+        .and_then(Value::as_str)
+        .map(String::from);
+    let result = crate::manager::sync_providers_now(target_provider);
+    Ok(wrap_ok_value(result, "provider sync 已处理。"))
 }

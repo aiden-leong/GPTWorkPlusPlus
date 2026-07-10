@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "crates/codex-plus-core",
   "crates/codex-plus-data",
+  "crates/codex-plus-storage",
   "apps/codex-plus-launcher",
   "apps/codex-plus-server",
 ]

@@ -3,11 +3,8 @@ pub mod assets;
 pub mod bridge;
 pub mod ccs_import;
 pub mod cdp;
-pub mod codex_home;
 pub mod codex_local_storage;
-pub mod codex_sqlite;
 mod computer_use_guard;
-pub mod diagnostic_log;
 pub mod env_conflicts;
 pub mod http_api;
 pub mod http_client;
@@ -15,10 +12,11 @@ pub mod install;
 pub mod launcher;
 pub mod manager;
 pub mod model_catalog;
-pub mod model_suffix;
-pub mod models;
+
+// 这几个模块搬到 codex-plus-storage（解开 core ↔ data 循环依赖），
+// core 这里 re-export 一下保持下游代码（manager / routes 等）不改。
+pub use codex_plus_storage::{codex_home, codex_sqlite, diagnostic_log, model_suffix, paths};
 pub mod native_menu;
-pub mod paths;
 pub mod plugin_marketplace;
 pub mod ports;
 pub mod protocol_proxy;
