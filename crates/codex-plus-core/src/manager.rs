@@ -206,6 +206,15 @@ pub struct StepwiseTestPayload {
     pub error: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderDoctorCheck {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub detail: String,
+}
+
 // =============================================================================
 // 工具函数
 // =============================================================================
@@ -1266,19 +1275,267 @@ pub struct DeleteLocalSessionRequest {
 // 仍然 stub 的端点
 // =============================================================================
 
-pub fn fetch_relay_profile_models() -> Value {
-    json!({"status": "skipped", "models": [], "endpoint": ""})
+pub async fn fetch_relay_profile_models(payload: Value) -> Value {
+    let profile = match parse_relay_profile_payload(&payload) {
+        Ok(p) => p,
+        Err(error) => {
+            return json!({
+                "status": "failed",
+                "models": [],
+                "endpoint": String::new(),
+                "message": format!("解析 profile 失败：{error}"),
+            });
+        }
+    };
+    let profile_name = if profile.name.trim().is_empty() {
+        "未命名供应商"
+    } else {
+        profile.name.trim()
+    };
+    match crate::model_catalog::fetch_relay_profile_model_ids(&profile).await {
+        Ok((models, endpoint)) => json!({
+            "status": "ok",
+            "models": models,
+            "endpoint": endpoint,
+            "message": format!("已从「{profile_name}」获取 {} 个模型。", models.len()),
+        }),
+        Err(error) => json!({
+            "status": "failed",
+            "models": [],
+            "endpoint": String::new(),
+            "message": format!("从「{profile_name}」获取模型失败：{error}"),
+        }),
+    }
 }
 
-pub fn diagnose_relay_profile() -> Value {
+pub async fn diagnose_relay_profile(payload: Value) -> Value {
+    let profile = match parse_relay_profile_payload(&payload) {
+        Ok(p) => p,
+        Err(error) => {
+            return json!({
+                "status": "failed",
+                "profileName": "",
+                "model": "",
+                "summary": format!("解析 profile 失败：{error}"),
+                "recommendation": "检查 profile JSON 结构。",
+                "checks": [],
+            });
+        }
+    };
+    let profile_name = if profile.name.trim().is_empty() {
+        "未命名供应商".to_string()
+    } else {
+        profile.name.trim().to_string()
+    };
+    let settings = SettingsStore::default().load().unwrap_or_default();
+    let test_model = if !profile.test_model.trim().is_empty() {
+        profile.test_model.trim().to_string()
+    } else {
+        let from_profile = relay_config::relay_profile_model(&profile);
+        if from_profile.trim().is_empty() {
+            settings.relay_test_model.trim().to_string()
+        } else {
+            from_profile
+        }
+    };
+    let mut checks: Vec<ProviderDoctorCheck> = Vec::new();
+
+    if profile.relay_mode == crate::settings::RelayMode::Official && !profile.official_mix_api_key {
+        checks.push(ProviderDoctorCheck {
+            id: "config".to_string(),
+            title: "配置完整性".to_string(),
+            status: "ok".to_string(),
+            detail: "官方登录供应商不需要 Base URL / API Key。".to_string(),
+        });
+        return json!({
+            "status": "ok",
+            "profileName": profile_name,
+            "model": test_model,
+            "summary": "官方登录供应商无需 API 诊断。",
+            "recommendation": "如果 GPT Work 官方账号可用，直接使用官方登录模式即可。",
+            "checks": checks,
+        });
+    }
+
+    if relay_config::relay_profile_base_url(&profile).trim().is_empty()
+        || relay_config::relay_profile_api_key(&profile).trim().is_empty()
+    {
+        checks.push(ProviderDoctorCheck {
+            id: "config".to_string(),
+            title: "配置完整性".to_string(),
+            status: "failed".to_string(),
+            detail: "Base URL 或 API Key 为空。".to_string(),
+        });
+        return json!({
+            "status": "failed",
+            "profileName": profile_name,
+            "model": test_model,
+            "summary": "配置不完整，无法发起上游诊断。",
+            "recommendation": "先填写 Base URL 和 API Key；如果是官方账号，请切换到官方登录模式。",
+            "checks": checks,
+        });
+    }
+
+    checks.push(ProviderDoctorCheck {
+        id: "config".to_string(),
+        title: "配置完整性".to_string(),
+        status: "ok".to_string(),
+        detail: format!(
+            "{} ({})",
+            relay_config::relay_profile_base_url(&profile),
+            match profile.protocol {
+                crate::settings::RelayProtocol::Responses => "Responses API",
+                crate::settings::RelayProtocol::ChatCompletions => "Chat Completions",
+            }
+        ),
+    });
+
+    match crate::model_catalog::fetch_relay_profile_model_ids(&profile).await {
+        Ok((models, endpoint)) => {
+            let contains_model = !test_model.trim().is_empty()
+                && models.iter().any(|model| model == test_model.trim());
+            let status = if models.is_empty() {
+                "failed"
+            } else if contains_model || test_model.trim().is_empty() {
+                "ok"
+            } else {
+                "warning"
+            };
+            let detail = if models.is_empty() {
+                format!("{endpoint} 返回 0 个模型。")
+            } else if contains_model || test_model.trim().is_empty() {
+                format!("{endpoint} 返回 {} 个模型。", models.len())
+            } else {
+                format!(
+                    "{endpoint} 返回 {} 个模型，但未看到测试模型「{}」。",
+                    models.len(),
+                    test_model
+                )
+            };
+            checks.push(ProviderDoctorCheck {
+                id: "models".to_string(),
+                title: "模型列表".to_string(),
+                status: status.to_string(),
+                detail,
+            });
+        }
+        Err(error) => checks.push(ProviderDoctorCheck {
+            id: "models".to_string(),
+            title: "模型列表".to_string(),
+            status: "failed".to_string(),
+            detail: error.to_string(),
+        }),
+    }
+
+    match relay_config::test_relay_profile(&profile, &test_model).await {
+        Ok(result) => {
+            let status = if result.http_status < 400 { "ok" } else { "failed" };
+            let preview = result.response_preview.trim();
+            checks.push(ProviderDoctorCheck {
+                id: "request".to_string(),
+                title: "真实请求".to_string(),
+                status: status.to_string(),
+                detail: if preview.is_empty() {
+                    format!(
+                        "{} 返回 HTTP {}，响应内容为空。",
+                        result.endpoint, result.http_status
+                    )
+                } else {
+                    format!(
+                        "{} 返回 HTTP {}：{}",
+                        result.endpoint, result.http_status, preview
+                    )
+                },
+            });
+        }
+        Err(error) => checks.push(ProviderDoctorCheck {
+            id: "request".to_string(),
+            title: "真实请求".to_string(),
+            status: "failed".to_string(),
+            detail: error.to_string(),
+        }),
+    }
+
+    let failed_count = checks.iter().filter(|c| c.status == "failed").count();
+    let warning_count = checks.iter().filter(|c| c.status == "warning").count();
+    let overall = if failed_count > 0 { "failed" } else { "ok" };
+    let summary = if failed_count > 0 {
+        format!("发现 {failed_count} 项失败，GPT Work 可能无法使用该供应商。")
+    } else if warning_count > 0 {
+        format!("基础连接可用，但有 {warning_count} 项需要确认。")
+    } else {
+        "供应商基础诊断通过。".to_string()
+    };
+    let recommendation = provider_doctor_recommendation(&checks);
+    log_manager_event(
+        "manager.diagnose_relay_profile",
+        json!({
+            "profileName": profile_name,
+            "failedCount": failed_count,
+            "warningCount": warning_count,
+        }),
+    );
     json!({
-        "status": "skipped",
-        "profile_name": "",
-        "model": "",
-        "summary": "Provider 诊断暂未在 HTTP bridge 中实现",
-        "recommendation": "",
-        "checks": []
+        "status": overall,
+        "profileName": profile_name,
+        "model": test_model,
+        "summary": summary,
+        "recommendation": recommendation,
+        "checks": checks,
     })
+}
+
+/// 解析 fetch / diagnose 接口里的 `profile` 字段 —— 兼容：
+/// - 直接是 RelayProfile JSON
+/// - 包在 `{ "profile": { ... } }` 里
+/// - 包在 `{ "profile": { relayProfiles, activeRelayId } }`（从 active 取）
+fn parse_relay_profile_payload(payload: &Value) -> anyhow::Result<RelayProfile> {
+    if let Some(profile) = payload.get("profile") {
+        if let Ok(p) = serde_json::from_value::<RelayProfile>(profile.clone()) {
+            return Ok(p);
+        }
+        if let Ok(settings) = serde_json::from_value::<BackendSettings>(profile.clone()) {
+            if let Some(p) = settings
+                .relay_profiles
+                .into_iter()
+                .find(|p| p.id == settings.active_relay_id)
+            {
+                return Ok(p);
+            }
+        }
+    }
+    if let Ok(p) = serde_json::from_value::<RelayProfile>(payload.clone()) {
+        return Ok(p);
+    }
+    anyhow::bail!("无法解析 RelayProfile，期望 {{profile: {{...}}}} 或裸 RelayProfile JSON")
+}
+
+fn provider_doctor_recommendation(checks: &[ProviderDoctorCheck]) -> String {
+    if checks
+        .iter()
+        .any(|c| c.id == "config" && c.status == "failed")
+    {
+        return "先补齐 Base URL 和 API Key；如果使用官方账号，请切换到官方登录模式。".to_string();
+    }
+    if checks
+        .iter()
+        .any(|c| c.id == "models" && c.status == "failed")
+    {
+        return "优先检查 Base URL 是否包含正确的 /v1 前缀，以及供应商是否支持 /v1/models。"
+            .to_string();
+    }
+    if checks
+        .iter()
+        .any(|c| c.id == "request" && c.status == "failed")
+    {
+        return "优先检查测试模型名称、上游协议选择和 Key 权限；如果 Chat Completions 可用，请切到对应协议。"
+            .to_string();
+    }
+    if checks.iter().any(|c| c.status == "warning") {
+        return "模型列表可用，但测试模型没找到；可在供应商配置中调整测试模型或确认上游确实支持该模型。"
+            .to_string();
+    }
+    String::new()
 }
 
 pub fn repair_plugin_marketplace() -> Value {
