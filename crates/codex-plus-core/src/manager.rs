@@ -1240,17 +1240,54 @@ pub fn diagnose_relay_profile() -> Value {
 }
 
 pub fn repair_plugin_marketplace() -> Value {
-    json!({
-        "status": "skipped",
-        "message": "Plugin marketplace 修复暂未在 HTTP bridge 中实现"
-    })
+    // plugin_marketplace::ensure_openai_curated_marketplace_config 现成 API
+    let home = codex_home::default_codex_home_dir();
+    match plugin_marketplace::ensure_openai_curated_marketplace_config(&home) {
+        Ok(_configured) => {
+            log_manager_event("manager.repair_plugin_marketplace", json!({}));
+            json!({
+                "status": "ok",
+                "codexHome": home.to_string_lossy().to_string(),
+                "message": "插件市场已检查/配置。"
+            })
+        }
+        Err(error) => {
+            log_manager_event(
+                "manager.repair_plugin_marketplace_failed",
+                json!({"error": error.to_string()}),
+            );
+            json!({
+                "status": "failed",
+                "codexHome": home.to_string_lossy().to_string(),
+                "message": error.to_string()
+            })
+        }
+    }
 }
 
 pub fn repair_remote_plugin_marketplace() -> Value {
-    json!({
-        "status": "skipped",
-        "message": "Remote plugin marketplace 修复暂未在 HTTP bridge 中实现"
-    })
+    let home = codex_home::default_codex_home_dir();
+    match plugin_marketplace::ensure_openai_curated_remote_marketplace_config(&home) {
+        Ok(_configured) => {
+            log_manager_event("manager.repair_remote_plugin_marketplace", json!({}));
+            json!({
+                "status": "ok",
+                "codexHome": home.to_string_lossy().to_string(),
+                "message": "远端插件市场已检查/配置。"
+            })
+        }
+        Err(error) => {
+            log_manager_event(
+                "manager.repair_remote_plugin_marketplace_failed",
+                json!({"error": error.to_string()}),
+            );
+            json!({
+                "status": "failed",
+                "codexHome": home.to_string_lossy().to_string(),
+                "message": error.to_string()
+            })
+        }
+    }
 }
 
 pub fn load_provider_sync_targets() -> Value {
@@ -1266,19 +1303,4 @@ pub fn sync_providers_now() -> Value {
         "status": "skipped",
         "message": "Provider sync 暂未在 HTTP bridge 中实现"
     })
-}
-
-pub fn list_zed_remote_projects() -> Value {
-    json!({"status": "skipped", "projects": []})
-}
-
-pub fn open_zed_remote() -> Value {
-    json!({
-        "status": "skipped",
-        "message": "Zed Remote 暂未在 HTTP bridge 中实现"
-    })
-}
-
-pub fn forget_zed_remote_project(id: &str) -> Value {
-    json!({"status": "skipped", "id": id})
 }

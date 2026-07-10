@@ -373,12 +373,6 @@ pub async fn handle_bridge_request(
         }
         "/manager/load-provider-sync-targets" => Ok(crate::manager::load_provider_sync_targets()),
         "/manager/sync-providers-now" => Ok(crate::manager::sync_providers_now()),
-        "/manager/list-zed-remote-projects" => Ok(crate::manager::list_zed_remote_projects()),
-        "/manager/open-zed-remote" => Ok(crate::manager::open_zed_remote()),
-        "/manager/forget-zed-remote-project" => {
-            let id = payload.get("id").and_then(Value::as_str).unwrap_or("");
-            Ok(crate::manager::forget_zed_remote_project(id))
-        }
         "/delete" => result_value(ctx.data.delete(session_from_payload(&payload)).await),
         "/undo" => {
             let undo_token = payload
