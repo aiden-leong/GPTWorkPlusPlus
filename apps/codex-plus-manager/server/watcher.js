@@ -17,6 +17,7 @@
 
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
+import * as fsSync from "node:fs";
 import * as os from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -41,16 +42,24 @@ function plistPath() {
   return path.join(launchAgentsDir(), PLIST_FILENAME);
 }
 
-// Watcher 进程调用的 shell 脚本 — 当前只保持 launchd happy，
-// 不死循环。后续接真实 chokidar/fs.watch 时替换。
-const WATCHER_PROGRAM_SCRIPT = `#!/bin/sh
-# Codex++ watcher placeholder
-# 持续运行 launchd 要求（interval > 30s 会被 throttle）
-# 真实的事件监听未来在这里启动
-while true; do
-  sleep 300
-done
+// 监听目标目录 — Codex++ 的 settings / config / auth 变更
+// 这是 watcher 的核心价值：捕获外部修改（比如 codex CLI 直接写 config.toml），
+// 后续可触发 server 端 invalidate cache 或重载。
+const WATCH_TARGETS = [
+  path.join(os.homedir(), ".codex-plus-plus"),
+  path.join(os.homedir(), ".codex"),
+];
+
+// Watcher 进程调用的 shell 脚本 — 用 `node --daemon` 调 startWatcher()
+// 让 launchd 拉起独立进程，进程内跑 fs.watch 循环
+function buildWatcherScript() {
+  // server/watcher.js -> server/ <this file>
+  const watcherJs = new URL(import.meta.url).pathname;
+  return `#!/bin/sh
+# Codex++ watcher — 监听 config 变化
+exec node "${watcherJs}" --daemon
 `;
+}
 
 function buildPlist() {
   // 找 watcher script 写到哪里 — bundle 资源目录外
@@ -159,7 +168,7 @@ export async function installWatcher() {
     const scriptPath = path.join(os.homedir(), ".codex-plus-plus", "watcher.sh");
     await fs.mkdir(path.dirname(scriptPath), { recursive: true });
     await fs.mkdir(path.join(os.homedir(), ".codex-plus-plus", "logs"), { recursive: true });
-    await fs.writeFile(scriptPath, WATCHER_PROGRAM_SCRIPT);
+    await fs.writeFile(scriptPath, buildWatcherScript());
     await fs.chmod(scriptPath, 0o755);
 
     // 2. 写 plist
@@ -283,4 +292,71 @@ export async function disableWatcher() {
       disabled_flag: "",
     };
   }
+}
+
+// ====== Daemon mode (launchd 拉起的独立进程) ======
+//
+// `node watcher.js --daemon` 启动后跑 fs.watch 循环：
+// - 监听 ~/.codex-plus-plus 和 ~/.codex 下的 toml/json 变化
+// - 变化时 append 一行到 ~/.codex-plus-plus/logs/watcher.events.log
+// - 进程不死，launchd KeepAlive 兜底
+//
+// 这是真实功能：给后续 server 端 cache invalidation / UI reload 信号留 hook。
+
+function logEvent(event, filename) {
+  const logPath = path.join(os.homedir(), ".codex-plus-plus", "logs", "watcher.events.log");
+  const line = `${new Date().toISOString()} ${event} ${filename}\n`;
+  fs.mkdir(path.dirname(logPath), { recursive: true })
+    .then(() => fs.appendFile(logPath, line))
+    .catch(() => {});
+}
+
+async function startWatcher() {
+  // 检查 disabled flag
+  if (await pathExists(watcherDisabledFlag())) {
+    process.stdout.write("watcher: disabled flag present, exiting\n");
+    return;
+  }
+  const watchers = [];
+  for (const target of WATCH_TARGETS) {
+    try {
+      await fs.access(target);
+    } catch {
+      continue; // 目录不存在就跳过
+    }
+    try {
+      const w = fsSync.watch(target, { recursive: false }, (event, filename) => {
+        if (!filename) return;
+        // 只关心 toml / json / jsonc
+        if (!/\.(toml|json|jsonc)$/i.test(filename)) return;
+        logEvent(event, filename);
+      });
+      watchers.push(w);
+      process.stdout.write(`watcher: watching ${target}\n`);
+    } catch (err) {
+      process.stderr.write(`watcher: failed to watch ${target}: ${err.message}\n`);
+    }
+  }
+  if (watchers.length === 0) {
+    process.stdout.write("watcher: no watchable directories, sleeping for keepalive\n");
+    // 仍要 keepalive 让 launchd 满意，但本身没活干
+    setInterval(() => {}, 1 << 30);
+  }
+  // 等 SIGTERM / SIGINT 干净退出
+  const shutdown = () => {
+    for (const w of watchers) {
+      try { w.close(); } catch {}
+    }
+    process.exit(0);
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}
+
+// 启动入口：node watcher.js --daemon
+if (process.argv.includes("--daemon")) {
+  startWatcher().catch((err) => {
+    process.stderr.write(`watcher daemon failed: ${err.message}\n`);
+    process.exit(1);
+  });
 }

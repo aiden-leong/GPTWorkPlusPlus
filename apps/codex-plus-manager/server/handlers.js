@@ -80,10 +80,6 @@ function failed(message, payload = {}) {
   return { status: "failed", message, ...payload };
 }
 
-function notImplemented(name) {
-  return failed(`Node 端 stub：${name}（阶段 2+ 实现）`);
-}
-
 // ====== Helpers ======
 
 async function findCodexAppDir(savedPath) {
@@ -488,22 +484,6 @@ const h = {
   // ====== Diagnostic events ======
 
   "/manager/write-diagnostic-event": () => ok({}),
-
-  // ====== Stepwise (Rust 原 stepwise 模块) ======
-
-  "/stepwise/generate": () => notImplemented("stepwise.generate"),
-  "/stepwise/test": () => notImplemented("stepwise.test"),
-
-  // ====== Sessions (Rust 原 sessions 模块，保留兼容) ======
-
-  "/delete": () => notImplemented("sessions.delete"),
-  "/undo": () => notImplemented("sessions.undo"),
-  "/export-markdown": () => notImplemented("sessions.export-markdown"),
-  "/thread-usage-history": () => notImplemented("sessions.thread-usage-history"),
-  "/archived-thread": () => notImplemented("sessions.archived-thread"),
-  "/move-thread-workspace": () => notImplemented("sessions.move-thread-workspace"),
-  "/thread-sort-key": () => notImplemented("sessions.thread-sort-key"),
-  "/thread-sort-keys": () => notImplemented("sessions.thread-sort-keys"),
 };
 
 export const PATH_TABLE = h;
