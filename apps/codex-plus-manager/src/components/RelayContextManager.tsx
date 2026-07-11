@@ -334,7 +334,7 @@ const ContextEditModal = ({
       okText="保存"
       cancelText="取消"
       confirmLoading={submitting}
-      destroyOnClose
+      destroyOnHidden
     >
       {editing && (
         <Form form={form} layout="vertical" preserve={false}>

@@ -215,10 +215,29 @@ export const api = {
   },
 
   onProviderSyncProgress(
-    _cb: (progress: ProviderSyncProgress) => void,
+    cb: (progress: ProviderSyncProgress) => void,
   ): Promise<UnlistenFn> {
-    // 浏览器 EventSource / WebSocket 后续可补；先 no-op
-    return Promise.resolve(() => {});
+    // SSE 订阅：每次 syncProvidersNow 跑都会推 progress 事件
+    if (typeof EventSource === "undefined") {
+      return Promise.resolve(() => {});
+    }
+    const es = new EventSource(`${API_BASE}/api/events/provider-sync`);
+    es.addEventListener("progress", (ev) => {
+      try {
+        const data = JSON.parse((ev as MessageEvent).data);
+        cb({
+          percent: Number(data?.percent ?? 0),
+          message: String(data?.message ?? ""),
+          result: data?.result ?? null,
+        });
+      } catch {
+        // 解析失败忽略
+      }
+    });
+    // ready / error / 关闭 — 不主动打日志避免噪音
+    return Promise.resolve(() => {
+      try { es.close(); } catch {}
+    });
   },
 
   // ============== Script Market ==============

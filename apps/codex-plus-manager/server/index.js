@@ -9,6 +9,7 @@
 import express from "express";
 import cors from "cors";
 import * as handlers from "./handlers.js";
+import { providerSyncEvents } from "./provider-sync.js";
 
 const PORT = Number(process.env.PORT || 29999);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://127.0.0.1:5173";
@@ -26,6 +27,32 @@ app.use(
 // 健康检查
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", version: "0.0.0-node", impl: "node" });
+});
+
+// SSE: provider sync 进度推送
+// 前端 EventSource 订阅，每个进度事件写一行 `data: {json}\n\n`
+app.get("/api/events/provider-sync", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.flushHeaders?.();
+  // 立即发一个 ready 事件，前端能确认连接建立
+  res.write(`event: ready\ndata: ${JSON.stringify({ ts: Date.now() })}\n\n`);
+  const onProgress = (progress) => {
+    res.write(`event: progress\ndata: ${JSON.stringify(progress)}\n\n`);
+  };
+  providerSyncEvents.on("progress", onProgress);
+  // 心跳防 idle timeout
+  const heartbeat = setInterval(() => {
+    res.write(`: heartbeat ${Date.now()}\n\n`);
+  }, 15_000);
+  const cleanup = () => {
+    providerSyncEvents.off("progress", onProgress);
+    clearInterval(heartbeat);
+  };
+  req.on("close", cleanup);
+  req.on("aborted", cleanup);
 });
 
 // 派发端点：所有业务请求都走这里

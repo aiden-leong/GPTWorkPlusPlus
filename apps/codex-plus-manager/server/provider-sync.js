@@ -6,6 +6,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
+import { EventEmitter } from "node:events";
 import Database from "better-sqlite3";
 import { CODEX_HOME } from "./settings.js";
 import { CONFIG_PATH, AUTH_PATH } from "./relay-config.js";
@@ -13,6 +14,19 @@ import { CONFIG_PATH, AUTH_PATH } from "./relay-config.js";
 const HOME = os.homedir();
 const STATE_SQLITE = path.join(CODEX_HOME, "state.sqlite");
 const ARCHIVED_DIR = path.join(CODEX_HOME, "archived_sessions");
+
+// 全局 EventEmitter — 给 SSE endpoint 订阅用
+// 单进程多客户端共享，简单够用
+export const providerSyncEvents = new EventEmitter();
+providerSyncEvents.setMaxListeners(50);
+
+function emitProgress(stage, percent, message, result = null) {
+  // emit shape 给 SSE：percent / message / result 三个字段对齐前端
+  // ProviderSyncProgress；额外 stage + ts 给调试用。
+  const progress = { stage, percent, message, result, ts: Date.now() };
+  providerSyncEvents.emit("progress", progress);
+  return progress;
+}
 
 async function readTomlOrEmpty(filePath) {
   try {
@@ -150,14 +164,24 @@ export async function loadProviderSyncTargets() {
   };
 }
 
-export async function syncProvidersNow(targetProvider) {
+export async function syncProvidersNow(targetProvider, options = {}) {
   // targetProvider 形如 "config:codex-plus-relay"
   // 把这个 provider 的 baseUrl + bearer 写到 config.toml（如果来自 config），
   // 并写 auth.json
+  //
+  // options.emit: 可选 callback，参数 (stage, percent, message)，
+  // 同步时供 SSE 订阅者接收进度
+  const { emit } = options;
+  const broadcast = (stage, percent, message) => {
+    if (emit) emit(stage, percent, message);
+    emitProgress(stage, percent, message);
+  };
+
   if (!targetProvider || !targetProvider.startsWith("config:")) {
     return { status: "failed", message: "目前只支持 config 来源的 provider" };
   }
   const providerId = targetProvider.slice("config:".length);
+  broadcast("reading", 10, `读取 config.toml (provider=${providerId})`);
   const doc = await readTomlOrEmpty(CONFIG_PATH);
   const provider = doc?.model_providers?.[providerId];
   if (!provider) {
@@ -165,13 +189,13 @@ export async function syncProvidersNow(targetProvider) {
   }
   const baseUrl = provider.base_url || "";
   const apiKey = provider.experimental_bearer_token || "";
-  // 写 auth.json
+  broadcast("writing-auth", 40, "写 auth.json");
   const authPayload = JSON.stringify({ OPENAI_API_KEY: apiKey }, null, 2);
   const tmp = `${AUTH_PATH}.tmp`;
   await fs.mkdir(path.dirname(AUTH_PATH), { recursive: true });
   await fs.writeFile(tmp, authPayload, "utf8");
   await fs.rename(tmp, AUTH_PATH);
-  // 写 config.toml
+  broadcast("writing-config", 70, "写 config.toml");
   doc.model_provider = providerId;
   if (!doc.model_providers[providerId].name) {
     doc.model_providers[providerId].name = providerId;
@@ -181,7 +205,7 @@ export async function syncProvidersNow(targetProvider) {
   const tmp2 = `${CONFIG_PATH}.tmp`;
   await fs.writeFile(tmp2, updated, "utf8");
   await fs.rename(tmp2, CONFIG_PATH);
-  return {
+  const result = {
     status: "ok",
     message: `已同步到 ${providerId}`,
     payload: {
@@ -193,4 +217,6 @@ export async function syncProvidersNow(targetProvider) {
       authWritten: true,
     },
   };
+  broadcast("done", 100, result.message);
+  return result;
 }

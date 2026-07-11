@@ -64,6 +64,13 @@ import {
   disableWatcher,
 } from "./watcher.js";
 import { testStepwiseSettings } from "./stepwise.js";
+import {
+  listContextEntries,
+  readLiveContextEntries,
+  upsertContextEntry,
+  deleteContextEntry,
+  syncLiveContextEntries,
+} from "./context-entries.js";
 
 const HOME = os.homedir();
 const LOGS_DIR = path.join(CODEX_HOME, "logs");
@@ -421,17 +428,27 @@ const h = {
 
   "/manager/list-context-entries": async () => {
     const settings = await settingsStore.load();
-    return ok({
-      settings,
-      entries: { mcpServers: [], skills: [], plugins: [] },
-    });
+    const entries = await listContextEntries();
+    return ok({ settings, entries });
   },
-  "/manager/read-live-context-entries": () =>
-    ok({ entries: { mcpServers: [], skills: [], plugins: [] } }),
-  "/manager/upsert-context-entry": () => ok({}),
-  "/manager/sync-live-context-entries": () =>
-    ok({ entries: { mcpServers: [], skills: [], plugins: [] } }),
-  "/manager/delete-context-entry": () => ok({}),
+  "/manager/read-live-context-entries": async () => {
+    const entries = await readLiveContextEntries();
+    return ok({ entries });
+  },
+  "/manager/upsert-context-entry": async (args) => {
+    const req = args?.request ?? args;
+    const r = await upsertContextEntry(req);
+    return r;
+  },
+  "/manager/sync-live-context-entries": async () => {
+    const r = await syncLiveContextEntries();
+    return r.status === "ok" ? ok(r) : r;
+  },
+  "/manager/delete-context-entry": async (args) => {
+    const req = args?.request ?? args;
+    const r = await deleteContextEntry(req);
+    return r;
+  },
 
   // ====== Relay Common Config ======
 

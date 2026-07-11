@@ -245,7 +245,7 @@ export const RelayProfileEditor = ({ open, profile, isNew, onClose, onSaved }: P
       cancelText="取消"
       onOk={handleSave}
       confirmLoading={submitting}
-      destroyOnClose
+      destroyOnHidden
       footer={[
         !isNew && (
           <Button key="delete" danger onClick={handleDelete} style={{ float: "left" }}>
