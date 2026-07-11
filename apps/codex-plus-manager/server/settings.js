@@ -31,12 +31,6 @@ export const DEFAULT_LAUNCH_MODE = "patch";
 
 const VALID_FIT_MODES = new Set(["fill", "fit", "stretch", "tile", "center"]);
 const VALID_LAUNCH_MODES = new Set(["patch", "relay"]);
-const VALID_ZED_STRATEGIES = new Set([
-  "addToFocusedWorkspace",
-  "reuseWindow",
-  "newWindow",
-  "default",
-]);
 
 // ============== 默认 Relay Profile ==============
 
@@ -92,10 +86,6 @@ export function defaultBackendSettings() {
     codexAppThreadIdBadge: false,
     codexAppConversationView: false,
     codexAppThreadScrollRestore: true,
-    codexAppZedRemoteOpen: true,
-    zedRemoteOpenStrategy: "addToFocusedWorkspace",
-    zedRemoteProjectRegistryEnabled: true,
-    zedRemoteSyncToZedSettings: false,
     codexAppUpstreamWorktreeCreate: true,
     codexAppNativeMenuPlacement: true,
     codexAppNativeMenuLocalization: true,
@@ -159,10 +149,6 @@ function normalizeLaunchMode(v) {
   return VALID_LAUNCH_MODES.has(v) ? v : DEFAULT_LAUNCH_MODE;
 }
 
-function normalizeZedStrategy(v) {
-  return VALID_ZED_STRATEGIES.has(v) ? v : "default";
-}
-
 function normalizeRelayProfile(p) {
   const base = defaultRelayProfile();
   if (!p || typeof p !== "object") return base;
@@ -222,7 +208,6 @@ export function normalizeSettings(s) {
     (s?.codexAppStepwiseApiKeyEnv ?? "").trim() || DEFAULT_STEPWISE_API_KEY_ENV;
   merged.codexAppStepwiseModel = (s?.codexAppStepwiseModel ?? "").trim();
   merged.launchMode = normalizeLaunchMode(s?.launchMode);
-  merged.zedRemoteOpenStrategy = normalizeZedStrategy(s?.zedRemoteOpenStrategy);
   merged.relayProfiles = Array.isArray(s?.relayProfiles)
     ? s.relayProfiles.map(normalizeRelayProfile)
     : [defaultRelayProfile()];

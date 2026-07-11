@@ -20,8 +20,6 @@ import type {
   RelayProfileModelsResult,
   LocalSessionsResult,
   DeleteLocalSessionResult,
-  ZedRemoteProjectsResult,
-  ZedRemoteOpenResult,
   SettingsBackfillResult,
   ContextEntriesResult,
   LiveContextEntriesResult,
@@ -44,7 +42,6 @@ import type {
   BackendSettings,
   RelayProfile,
   LocalSession,
-  ZedRemoteProject,
   CodexContextEntries,
   ProviderImportRequest,
   EnvConflict,
@@ -183,23 +180,6 @@ export const api = {
     dbPath: string | null;
   }): Promise<DeleteLocalSessionResult> {
     return call<DeleteLocalSessionResult>("/sessions/delete", { request });
-  },
-
-  // ============== Zed Remote ==============
-
-  async listZedRemoteProjects(): Promise<ZedRemoteProjectsResult> {
-    return call<ZedRemoteProjectsResult>("/zed-remote/projects");
-  },
-
-  async openZedRemote(payload: {
-    project: ZedRemoteProject;
-    strategy: string;
-  }): Promise<ZedRemoteOpenResult> {
-    return call<ZedRemoteOpenResult>("/zed-remote/open", { payload });
-  },
-
-  async forgetZedRemoteProject(id: string): Promise<CommandResult<unknown>> {
-    return call("/zed-remote/forget-project", { id });
   },
 
   // ============== Provider Sync ==============
@@ -494,8 +474,6 @@ export type {
   RelayProfileModelsResult,
   LocalSessionsResult,
   DeleteLocalSessionResult,
-  ZedRemoteProjectsResult,
-  ZedRemoteOpenResult,
   SettingsBackfillResult,
   ContextEntriesResult,
   LiveContextEntriesResult,
@@ -518,7 +496,6 @@ export type {
   BackendSettings,
   RelayProfile,
   LocalSession,
-  ZedRemoteProject,
   CodexContextEntries,
   ProviderImportRequest,
   EnvConflict,

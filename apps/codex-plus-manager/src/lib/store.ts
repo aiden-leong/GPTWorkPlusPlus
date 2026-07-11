@@ -8,7 +8,6 @@ import type {
   RelayResult,
   RelayFilesResult,
   LocalSessionsResult,
-  ZedRemoteProjectsResult,
   CodexContextEntries,
   LogsResult,
   DiagnosticsResult,
@@ -115,18 +114,6 @@ type SessionsState = {
 export const useSessionsStore = create<SessionsState>((set) => ({
   localSessions: null,
   setLocalSessions: (localSessions) => set({ localSessions }),
-}));
-
-// ============== ZedRemote Store ==============
-
-type ZedRemoteState = {
-  zedRemoteProjects: ZedRemoteProjectsResult | null;
-  setZedRemoteProjects: (projects: ZedRemoteProjectsResult | null) => void;
-};
-
-export const useZedRemoteStore = create<ZedRemoteState>((set) => ({
-  zedRemoteProjects: null,
-  setZedRemoteProjects: (zedRemoteProjects) => set({ zedRemoteProjects }),
 }));
 
 // ============== Context Store (MCP/Skills/Plugins) ==============

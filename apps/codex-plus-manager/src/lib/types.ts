@@ -130,11 +130,6 @@ export type InstallResult = CommandResult<{
 export type RelayMode = "official" | "mixedApi" | "pureApi" | "aggregate";
 export type RelayProtocol = "responses" | "chatCompletions";
 export type ImageOverlayFitMode = "fill" | "fit" | "stretch" | "tile" | "center";
-export type ZedOpenStrategy =
-  | "addToFocusedWorkspace"
-  | "reuseWindow"
-  | "newWindow"
-  | "default";
 export type LaunchMode = "patch" | "relay";
 
 export type RelayAggregateMember = {
@@ -250,7 +245,6 @@ export type BackendSettings = {
   codexAppImageOverlayEnabled: boolean;
   codexAppComputerUseGuard: boolean;
   // Zed 远程
-  zedRemoteOpenStrategy: ZedOpenStrategy;
   // 启动参数
   launchArgs: string;
   launchMode: LaunchMode;
@@ -338,31 +332,6 @@ export type DeleteLocalSessionResult = CommandResult<{
 }>;
 
 // ============== Zed Remote ==============
-
-export type ZedRemoteProject = {
-  id: string;
-  label: string;
-  hostId: string;
-  ssh: {
-    user: string;
-    host: string;
-    port: number | null;
-  };
-  path: string;
-  url: string;
-  source: string;
-  lastOpenedAtMs: number | null;
-  isCurrent: boolean;
-};
-
-export type ZedRemoteProjectsResult = CommandResult<{
-  projects: ZedRemoteProject[];
-}>;
-
-export type ZedRemoteOpenResult = CommandResult<{
-  url: string;
-  strategy: ZedOpenStrategy;
-}>;
 
 // ============== Context Entries ==============
 
@@ -487,7 +456,6 @@ export type Route =
   | "overview"
   | "relay"
   | "enhance"
-  | "zed-remote"
   | "user-scripts"
   | "sessions"
   | "maintenance"

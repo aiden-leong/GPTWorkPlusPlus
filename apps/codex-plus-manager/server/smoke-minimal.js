@@ -16,7 +16,6 @@ const required = [
   "upstream.js",
   "launcher.js",
   "plugin-marketplace.js",
-  "zed-remote.js",
   "user-scripts.js",
   "injection.js",
   "ccs-import.js",

@@ -11,7 +11,6 @@ import { MainLayout } from "@/layout/MainLayout";
 import { Overview } from "@/pages/Overview";
 import { Relay } from "@/pages/Relay";
 import { Enhance } from "@/pages/Enhance";
-import { ZedRemote } from "@/pages/ZedRemote";
 import { UserScripts } from "@/pages/UserScripts";
 import { Sessions } from "@/pages/Sessions";
 import { Maintenance } from "@/pages/Maintenance";
@@ -39,7 +38,6 @@ const router = createHashRouter([
       { path: "overview", element: <Overview /> },
       { path: "relay", element: <Relay /> },
       { path: "enhance", element: <Enhance /> },
-      { path: "zed-remote", element: <ZedRemote /> },
       { path: "user-scripts", element: <UserScripts /> },
       { path: "sessions", element: <Sessions /> },
       { path: "maintenance", element: <Maintenance /> },

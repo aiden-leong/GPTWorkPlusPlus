@@ -34,7 +34,6 @@ import {
   remotePluginMarketplaceStatus,
   repairRemotePluginMarketplace,
 } from "./plugin-marketplace.js";
-import { listZedRemoteProjects, openZedRemote } from "./zed-remote.js";
 import { listUserScripts } from "./user-scripts.js";
 import {
   applyRelayInjection,
@@ -240,19 +239,6 @@ const h = {
     const r = await deleteLocalSession(req);
     return ok(r);
   },
-
-  // ====== Zed Remote ======
-
-  "/zed-remote/projects": async () => {
-    const r = await listZedRemoteProjects();
-    return ok(r);
-  },
-  "/zed-remote/open": async (args) => {
-    const payload = args?.payload ?? args;
-    const r = await openZedRemote(payload ?? {});
-    return r.status === "ok" ? ok(r) : r;
-  },
-  "/zed-remote/forget-project": () => ok({}),
 
   // ====== Provider Sync ======
 
