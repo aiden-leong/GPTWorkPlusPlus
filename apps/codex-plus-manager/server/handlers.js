@@ -55,6 +55,15 @@ import {
   deleteUserScript,
 } from "./script-market.js";
 import { loadProviderSyncTargets, syncProvidersNow } from "./provider-sync.js";
+import { installEntrypoints, uninstallEntrypoints, repairShortcuts } from "./entrypoints.js";
+import {
+  loadWatcherState,
+  installWatcher,
+  uninstallWatcher,
+  enableWatcher,
+  disableWatcher,
+} from "./watcher.js";
+import { testStepwiseSettings } from "./stepwise.js";
 
 const HOME = os.homedir();
 const LOGS_DIR = path.join(CODEX_HOME, "logs");
@@ -284,9 +293,21 @@ const h = {
 
   // ====== Install / Uninstall ======
 
-  "/manager/install-entrypoints": () => notImplemented("install-entrypoints"),
-  "/manager/uninstall-entrypoints": () => notImplemented("uninstall-entrypoints"),
-  "/manager/repair-shortcuts": () => notImplemented("repair-shortcuts"),
+  "/manager/install-entrypoints": async (args) => {
+    const options = args?.options ?? args ?? {};
+    const r = await installEntrypoints(options);
+    return r;
+  },
+  "/manager/uninstall-entrypoints": async (args) => {
+    const options = args?.options ?? args ?? {};
+    const r = await uninstallEntrypoints(options);
+    return r;
+  },
+  "/manager/repair-shortcuts": async (args) => {
+    const options = args?.options ?? args ?? {};
+    const r = await repairShortcuts(options);
+    return r;
+  },
 
   // ====== Plugin Marketplace ======
 
@@ -309,11 +330,21 @@ const h = {
 
   // ====== Watcher ======
 
-  "/manager/load-watcher-state": () => ok({ enabled: false, disabled_flag: "" }),
-  "/manager/install-watcher": () => ok({ enabled: false, disabled_flag: "watcher 在 Node 端未实现" }),
-  "/manager/uninstall-watcher": () => ok({ enabled: false, disabled_flag: "" }),
-  "/manager/enable-watcher": () => ok({ enabled: false, disabled_flag: "watcher 在 Node 端未实现" }),
-  "/manager/disable-watcher": () => ok({ enabled: false, disabled_flag: "" }),
+  "/manager/load-watcher-state": async () => {
+    return loadWatcherState();
+  },
+  "/manager/install-watcher": async () => {
+    return installWatcher();
+  },
+  "/manager/uninstall-watcher": async () => {
+    return uninstallWatcher();
+  },
+  "/manager/enable-watcher": async () => {
+    return enableWatcher();
+  },
+  "/manager/disable-watcher": async () => {
+    return disableWatcher();
+  },
 
   // ====== Logs / Diagnostics ======
 
@@ -418,7 +449,10 @@ const h = {
     const r = await testRelayProfile(profile);
     return ok(r);
   },
-  "/manager/test-stepwise-settings": () => notImplemented("test-stepwise-settings"),
+  "/manager/test-stepwise-settings": async (args) => {
+    const settings = args?.settings ?? args;
+    return testStepwiseSettings(settings);
+  },
   "/manager/fetch-relay-profile-models": async (args) => {
     const profile = args.profile ?? args;
     const r = await fetchRelayProfileModels(profile);
