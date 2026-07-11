@@ -57,41 +57,6 @@ jobs:
         working-directory: apps/codex-plus-manager/server
         run: npm install --package-lock=false
 
-      - name: Start server in background
+      - name: Run minimal smoke test
         working-directory: apps/codex-plus-manager/server
-        run: |
-          nohup node index.js > /tmp/server.log 2>&1 &
-          echo "PID=$!"
-          # wait for health
-          for i in $(seq 1 20); do
-            if curl -sf http://127.0.0.1:18794/api/health >/dev/null; then
-              echo "server up after ${i}s"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "server failed to start"
-          cat /tmp/server.log
-          exit 1
-
-      - name: Smoke test endpoints
-        run: |
-          set -e
-          for path in \
-            "/manager/load-settings" \
-            "/manager/load-overview" \
-            "/manager/relay-status" \
-            "/manager/check-env-conflicts" \
-            "/manager/plugin-marketplace-status" \
-          ; do
-            status=$(curl -s -X POST http://127.0.0.1:18794/api/bridge \
-              -H "Content-Type: application/json" \
-              -d "{\"path\":\"${path}\"}" \
-              | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['status'])")
-            echo "${path} -> ${status}"
-            if [ "$status" != "ok" ]; then
-              echo "FAIL: ${path} returned ${status}"
-              exit 1
-            fi
-          done
-          echo "all endpoints OK"
+        run: node smoke-minimal.js

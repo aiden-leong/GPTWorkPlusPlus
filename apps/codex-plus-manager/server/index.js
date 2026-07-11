@@ -10,7 +10,7 @@ import express from "express";
 import cors from "cors";
 import * as handlers from "./handlers.js";
 
-const PORT = Number(process.env.PORT || 18794);
+const PORT = Number(process.env.PORT || 29999);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://127.0.0.1:5173";
 
 const app = express();
