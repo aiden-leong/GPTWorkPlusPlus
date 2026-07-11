@@ -231,7 +231,7 @@ export const Maintenance = () => {
                         value={codexPath}
                         onChange={(e) => setCodexPath(e.target.value)}
                         placeholder="留空将使用默认路径"
-                        addonAfter={pathStatusTag(codexApp?.status)}
+                        suffix={pathStatusTag(codexApp?.status)}
                         style={{ marginTop: 4 }}
                       />
                     </Col>

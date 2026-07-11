@@ -374,7 +374,7 @@ const BasicTab = ({
       name="apiKey"
       rules={[{ required: true, message: "请输入 API Key" }]}
     >
-      <Input.Password placeholder="sk-..." />
+      <Input.Password placeholder="sk-..." autoComplete="current-password" />
     </Form.Item>
     <Row gutter={16}>
       <Col span={12}>
@@ -435,7 +435,7 @@ const AdvancedTab = () => {
         </Col>
         <Col span={12}>
           <Form.Item label="Stepwise API Key" name={["step", "apiKey"]}>
-            <Input.Password placeholder="sk-..." />
+            <Input.Password placeholder="sk-..." autoComplete="current-password" />
           </Form.Item>
         </Col>
       </Row>
