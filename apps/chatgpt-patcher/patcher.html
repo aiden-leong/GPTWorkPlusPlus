@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>ChatGPT Patcher</title>
+  <link rel="stylesheet" href="patcher.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ChatGPT Patcher</h1>
+      <p class="subtitle">把 ChatGPT.app 打补丁成 ChatGPT++.app</p>
+    </header>
+
+    <div id="dropzone" class="dropzone">
+      <div class="dropzone-content">
+        <div class="icon">📦</div>
+        <div class="prompt" id="prompt">拖入 <code>/Applications/ChatGPT.app</code></div>
+        <div class="or">或</div>
+        <button id="pickBtn" class="btn">选择 .app…</button>
+      </div>
+    </div>
+
+    <div id="info" class="info hidden">
+      <div class="info-row"><span class="label">原 .app</span><span class="value" id="info-path">—</span></div>
+      <div class="info-row"><span class="label">Bundle ID</span><span class="value" id="info-bundleid">—</span></div>
+      <div class="info-row"><span class="label">版本</span><span class="value" id="info-version">—</span></div>
+      <div class="info-row"><span class="label">输出</span><span class="value" id="info-target">—</span></div>
+    </div>
+
+    <div class="actions">
+      <button id="patchBtn" class="btn btn-primary" disabled>打补丁 → 生成 ChatGPT++.app</button>
+    </div>
+
+    <div id="result" class="result hidden">
+      <div class="result-title">✅ 完成</div>
+      <div class="result-path" id="result-path">—</div>
+      <div class="result-actions">
+        <button id="openBtn" class="btn">打开 ChatGPT++.app</button>
+        <button id="revealBtn" class="btn">在 Finder 中显示</button>
+      </div>
+    </div>
+
+    <div id="error" class="error hidden">
+      <div class="error-title">❌ 错误</div>
+      <div class="error-msg" id="error-msg">—</div>
+    </div>
+
+    <div class="logs" id="logs">
+      <div class="logs-title">日志</div>
+      <pre id="log-content"></pre>
+    </div>
+
+    <footer>
+      <small>原 .app 文件不会被修改，所有改动输出到 <code>ChatGPT++.app</code></small>
+    </footer>
+  </div>
+
+  <script src="patcher.js"></script>
+</body>
+</html>

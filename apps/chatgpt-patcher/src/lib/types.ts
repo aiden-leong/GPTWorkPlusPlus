@@ -1,5 +1,5 @@
 // 全部 Tauri command 类型定义
-// 与 apps/codex-plus-manager/src-tauri/src/commands.rs 保持同步
+// 与 apps/chatgpt-patcher/src-tauri/src/commands.rs 保持同步
 
 export type Status = "ok" | "failed" | "not_implemented" | "not_checked" | string;
 

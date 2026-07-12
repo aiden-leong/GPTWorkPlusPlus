@@ -34,3 +34,10 @@ apps/codex-plus-manager/dist-electron/
 # worktree 里 symlink 指向 main checkout 的 node_modules
 apps/codex-plus-manager/node_modules
 
+# ChatGPT Patcher 产物
+apps/chatgpt-patcher/release/
+apps/chatgpt-patcher/Electron.app/
+apps/chatgpt-patcher/dist-electron/
+apps/chatgpt-patcher/payload/
+apps/chatgpt-patcher/node_modules
+

@@ -1,14 +1,14 @@
 {
-  "name": "codex-plus-manager",
+  "name": "chatgpt-patcher",
   "version": "1.2.34",
   "private": true,
-  "description": "Codex++ Manager — Codex App enhancement configuration UI",
+  "description": "ChatGPT Patcher — drag ChatGPT.app in, get ChatGPT++.app out",
   "author": {
     "name": "Aiden Leong",
     "email": "aiden.leong@aibsd.com"
   },
   "license": "AGPL-3.0-only",
-  "main": "electron/main.cjs",
+  "main": "electron/patcher-main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
@@ -18,9 +18,10 @@
     "vite:build": "vite build",
     "server:install": "cd server && npm install",
     "server:start": "cd server && node index.js",
-    "electron:dev": "CODEX_PLUS_DEV=1 ./node_modules/.bin/electron electron/main.cjs",
-    "electron:build": "npm run build && electron-builder --mac --config electron-builder.yml",
-    "electron:build:dir": "npm run build && electron-builder --mac --dir --config electron-builder.yml"
+    "payload": "node scripts/build-payload.mjs",
+    "patcher:dev": "CODEX_PLUS_DEV=1 ./node_modules/.bin/electron --env CODEX_PATCHER_MODE=patcher electron/patcher-main.cjs",
+    "patcher:build": "npm run build && npm run payload && electron-builder --mac --config electron-builder.yml",
+    "patcher:build:dir": "npm run build && npm run payload && electron-builder --mac --dir --config electron-builder.yml"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
