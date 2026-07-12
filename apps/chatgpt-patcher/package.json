@@ -11,37 +11,14 @@
   "main": "electron/patcher-main.cjs",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5173",
-    "build": "tsc --noEmit -p tsconfig.json && vite build",
-    "check": "tsc --noEmit -p tsconfig.json",
-    "vite:dev": "vite --host 127.0.0.1 --port 5173",
-    "vite:build": "vite build",
-    "server:install": "cd server && npm install",
-    "server:start": "cd server && node index.js",
-    "payload": "node scripts/build-payload.mjs",
-    "patcher:dev": "CODEX_PLUS_DEV=1 ./node_modules/.bin/electron --env CODEX_PATCHER_MODE=patcher electron/patcher-main.cjs",
-    "patcher:build": "npm run build && npm run payload && electron-builder --mac --config electron-builder.yml",
-    "patcher:build:dir": "npm run build && npm run payload && electron-builder --mac --dir --config electron-builder.yml"
+    "patcher:dev": "CODEX_PLUS_DEV=1 ./node_modules/.bin/electron electron/patcher-main.cjs",
+    "patcher:build:dir": "electron-builder --mac --dir --config electron-builder.yml",
+    "patcher:build": "electron-builder --mac --config electron-builder.yml"
   },
-  "dependencies": {
-    "@fontsource/inter": "^5.2.8",
-    "@fontsource/jetbrains-mono": "^5.2.8",
-    "@types/sortablejs": "^1.15.9",
-    "antd": "^5.29.3",
-    "clsx": "^2.1.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.18.1",
-    "sortablejs": "^1.15.7",
-    "typescript": "^5.8.0",
-    "vite": "^6.0.0",
-    "zustand": "^5.0.14"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "@electron/asar": "^3.2.10",
     "@types/node": "^22.10.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
     "electron": "^31.7.7",
     "electron-builder": "^25.1.8"
   }

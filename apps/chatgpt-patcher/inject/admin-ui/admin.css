@@ -1,0 +1,74 @@
+/* ChatGPT++ 管理 UI */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  background: #0d1117;
+  color: #c9d1d9;
+  min-height: 100vh;
+  padding: 20px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+header { text-align: center; padding: 20px 0; border-bottom: 1px solid #30363d; margin-bottom: 20px; }
+header h1 { font-size: 22px; font-weight: 600; color: #f0f6fc; }
+header .subtitle { font-size: 11px; color: #8b949e; margin-top: 4px; }
+
+nav.tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #30363d; padding-bottom: 0; }
+.tab {
+  background: transparent;
+  color: #8b949e;
+  border: none;
+  padding: 10px 20px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.tab:hover { color: #c9d1d9; }
+.tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+main { max-width: 900px; margin: 0 auto; }
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+.card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card h2 { font-size: 15px; font-weight: 600; color: #f0f6fc; margin-bottom: 12px; }
+.card p { font-size: 13px; line-height: 1.6; margin-bottom: 8px; }
+.card ul { list-style: disc; padding-left: 20px; font-size: 13px; line-height: 1.8; }
+.card li { margin-bottom: 4px; }
+.card code { background: #30363d; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-family: "SF Mono", Menlo, monospace; }
+.card kbd { background: #30363d; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-family: "SF Mono", Menlo, monospace; border: 1px solid #555; }
+.card a { color: #58a6ff; text-decoration: none; }
+.card a:hover { text-decoration: underline; }
+
+#app-info {
+  font-family: "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.btn {
+  background: #238636;
+  color: #fff;
+  border: 1px solid #2ea043;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { background: #2ea043; }

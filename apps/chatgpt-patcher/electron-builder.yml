@@ -1,15 +1,12 @@
 # electron-builder 配置
 #
-# Patcher.app 是双击启动的工具，作用是拖入 ChatGPT.app 输出 ChatGPT++.app
-# Patcher.app 自带：
+# Patcher.app: 拖入 .app → 输出 patch 后的 ChatGPT++.app
+# Patcher.app 自带:
 #   - 拖拽 UI (patcher.html/css/js)
-#   - payload/manager/ (管理工具的 server + dist)
-#   - wrapper 二进制 (electron 自带 binary)
+#   - inject/ (hook.js + admin-ui/) — patch 时拷到 ChatGPT++.app
 #
 # 用法:
-#   npm run build              # vite build 管理工具 UI
-#   npm run payload            # 把 dist/ + server/ 拷到 payload/manager/
-#   npm run build:patcher      # = build + payload + electron-builder
+#   npm run build:patcher
 # 产物在 release/
 
 appId: com.aibsd.chatgpt.patcher
@@ -17,34 +14,23 @@ productName: ChatGPT Patcher
 
 asar: true
 
-# 打进 Patcher.app 的文件：
-# - electron/ 入口 (patcher-main.cjs + patcher-preload.js)
-# - patcher.html/css/js (拖拽 UI)
-# - payload/manager/ (嵌到 Patcher.app 的 Resources/payload/manager/)
-#   注：electron-builder 默认会把 asar 里的 payload 也包含，这里用 extraResources
+# 打进 Patcher.app 的文件
 files:
   - electron/patcher-main.cjs
   - electron/patcher-preload.js
-  - electron/wrapper-preload.js
   - patcher.html
   - patcher.css
   - patcher.js
   - package.json
 
+# inject/ 嵌到 Resources/patcher-resources/
 extraResources:
-  # Patcher 自带一份 payload，方便查看 + 测试
-  # 注意：运行时 Patcher 读 process.resourcesPath/payload/manager/
-  - from: payload
-    to: payload
+  - from: inject
+    to: patcher-resources
     filter:
       - "**/*"
-      - "!node_modules/.cache/**"
-      - "!**/*.map"
 
-# ChatGPT++.app 的 wrapper 模板 (Electron binary + wrapper-main.cjs + wrapper-preload.js)
-# Patcher 运行时把整个 patcher-template/ 拷到 ChatGPT++.app/Contents/
 extraMetadata:
-  # electron-builder 自动把 main 字段写进 app.asar/package.json
   main: electron/patcher-main.cjs
 
 directories:
@@ -54,15 +40,10 @@ directories:
 mac:
   category: public.app-category.developer-tools
   icon: build-resources/icon.icns
-  # 不签名 — 本地双击用 (用户首次启动需右键打开绕过 Gatekeeper)
+  # Patcher.app 本身不需要严格签名 (开发用)
   hardenedRuntime: false
   gatekeeperAssess: false
   identity: null
-  # 让 Patcher.app 启动时自动进入 patcher 模式
-  # ChatGPT++.app 没有这个 env var，自动走 wrapper 模式
-  extendInfo:
-    LSEnvironment:
-      CODEX_PATCHER_MODE: patcher
   target:
     - target: dmg
       arch:
@@ -72,3 +53,4 @@ mac:
       arch:
         - x64
         - arm64
+

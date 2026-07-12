@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>ChatGPT++ 管理</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <h1>ChatGPT++ 管理</h1>
+    <p class="subtitle">Hefei Ragdoll Technology · ChatGPT Patcher</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="overview">概览</button>
+    <button class="tab" data-tab="info">应用信息</button>
+    <button class="tab" data-tab="about">关于</button>
+  </nav>
+
+  <main>
+    <section id="overview" class="tab-pane active">
+      <div class="card">
+        <h2>欢迎</h2>
+        <p>这是 ChatGPT++ 的管理面板。原始 ChatGPT 应用的功能保持不变 — 我们只添加了这个管理窗口。</p>
+        <p>快捷键: <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> 打开管理</p>
+      </div>
+
+      <div class="card">
+        <h2>提示</h2>
+        <ul>
+          <li>原 ChatGPT 窗口的功能完全保留</li>
+          <li>所有认证和数据保留在 <code>~/Library/Application Support/</code></li>
+          <li>本管理窗口仅显示应用信息，不读取/修改用户数据</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="info" class="tab-pane">
+      <div class="card">
+        <h2>应用信息</h2>
+        <div id="app-info">加载中...</div>
+        <button id="refresh-info" class="btn">刷新</button>
+      </div>
+    </section>
+
+    <section id="about" class="tab-pane">
+      <div class="card">
+        <h2>关于 ChatGPT Patcher</h2>
+        <p>本应用由 ChatGPT Patcher 生成。Patcher 接受任意 Electron .app，注入管理功能，重新签名打包成 ChatGPT++。</p>
+        <p><strong>开发者:</strong> Hefei Ragdoll Technology Co.,Ltd.</p>
+        <p><strong>签名:</strong> Developer ID Application: Hefei Ragdoll Technology Co.,Ltd. (BR8ZH293JZ)</p>
+        <p><strong>项目:</strong> <a href="https://github.com/aiden-leong/GPTWorkPlusPlus" target="_blank">github.com/aiden-leong/GPTWorkPlusPlus</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>
