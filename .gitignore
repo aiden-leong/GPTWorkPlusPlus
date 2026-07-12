@@ -25,3 +25,12 @@ tools/codex-wechat/config.local.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
 
+# electron-builder 产物 (apps/codex-plus-manager/release/)
+apps/codex-plus-manager/release/
+# 临时 Electron.app (开发用，从 node_modules/electron/dist 拷出来的)
+apps/codex-plus-manager/Electron.app/
+# electron-builder 中间文件
+apps/codex-plus-manager/dist-electron/
+# worktree 里 symlink 指向 main checkout 的 node_modules
+apps/codex-plus-manager/node_modules
+

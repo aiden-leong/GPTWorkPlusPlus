@@ -2,14 +2,25 @@
   "name": "codex-plus-manager",
   "version": "1.2.34",
   "private": true,
+  "description": "Codex++ Manager — Codex App enhancement configuration UI",
+  "author": {
+    "name": "Aiden Leong",
+    "email": "aiden.leong@aibsd.com"
+  },
   "license": "AGPL-3.0-only",
+  "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "check": "tsc --noEmit -p tsconfig.json",
     "vite:dev": "vite --host 127.0.0.1 --port 5173",
-    "vite:build": "vite build"
+    "vite:build": "vite build",
+    "server:install": "cd server && npm install",
+    "server:start": "cd server && node index.js",
+    "electron:dev": "CODEX_PLUS_DEV=1 ./node_modules/.bin/electron electron/main.cjs",
+    "electron:build": "npm run build && electron-builder --mac --config electron-builder.yml",
+    "electron:build:dir": "npm run build && electron-builder --mac --dir --config electron-builder.yml"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
@@ -29,6 +40,8 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.3.4"
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^31.7.7",
+    "electron-builder": "^25.1.8"
   }
 }
